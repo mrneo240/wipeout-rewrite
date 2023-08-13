@@ -7,6 +7,8 @@
 	#else
 		#define SOKOL_GLCORE33
 	#endif
+#elif defined(RENDERER_GL_LEGACY)
+		#define SOKOL_GLCORE33
 #else
 	#error "Unsupported renderer for platform SOKOL"
 #endif

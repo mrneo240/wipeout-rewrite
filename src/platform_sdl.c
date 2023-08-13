@@ -214,7 +214,7 @@ void platform_set_audio_mix_cb(void (*cb)(float *buffer, uint32_t len)) {
 }
 
 
-#if defined(RENDERER_GL)
+#if defined(RENDERER_GL) || defined(RENDERER_GL_LEGACY)
 	#define PLATFORM_WINDOW_FLAGS SDL_WINDOW_OPENGL
 	SDL_GLContext platform_gl;
 
