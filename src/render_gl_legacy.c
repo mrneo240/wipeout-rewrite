@@ -64,12 +64,6 @@ static uint32_t textures_len = 0;
 
 static void render_flush();
 
-static void gl_message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam) {
-  fprintf( stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
-           ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
-            type, severity, message );
-}
-
 void render_init(vec2i_t size) {
 	#if defined(__APPLE__) && defined(__MACH__)
 		// OSX
@@ -79,24 +73,6 @@ void render_init(vec2i_t size) {
 		glewExperimental = GL_TRUE;
 		glewInit();
 	#endif
-
-	glEnable(GL_DEBUG_OUTPUT);
-	glDebugMessageCallback(gl_message_callback, NULL);
-	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-
-
-	// Atlas Texture
-	//Todo: Make white texture here
-	//glCreateTextures(GL_TEXTURE_2D, 1, &atlas_texture);
-	//glBindTexture(GL_TEXTURE_2D, atlas_texture);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, RENDER_USE_MIPMAPS ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);u_screen
-	//float anisotropy = 0;
-	//glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &anisotropy);
-	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
-
 
 	// Defaults
 
@@ -113,9 +89,7 @@ void render_init(vec2i_t size) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glAlphaFunc (GL_GREATER, 0.0f);
 
-
 	// Create white texture
-
 	rgba_t white_pixels[4] = {
 		rgba(128,128,128,255), rgba(128,128,128,255),
 		rgba(128,128,128,255), rgba(128,128,128,255)
@@ -126,7 +100,6 @@ void render_init(vec2i_t size) {
 void render_cleanup() {
 	// TODO
 }
-
 
 static void render_setup_2d_projection_mat() {
 	float near = -1;
@@ -270,10 +243,15 @@ void render_set_depth_offset(float offset) {
 
 void render_set_screen_position(vec2_t pos) {
 	render_flush();
-	//glPopMatrix();
-	//glPushMatrix();
-	//glTranslatef(pos.x, pos.y,0);
-	//glUniform2f(u_screen, pos.x, -pos.y);
+	if(pos.x ==0 && pos.y == 0){
+		glPopMatrix();
+		return;
+	}
+
+	glPushMatrix();
+	// Todo:
+	// recalc new modified view matrix to move correct units in NDC
+	// load that new matrix
 }
 
 void render_set_blend_mode(render_blend_mode_t new_mode) {
