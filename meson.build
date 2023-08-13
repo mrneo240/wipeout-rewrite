@@ -8,9 +8,11 @@ arg_code = []
 
 src_platform = []
 src_renderer = []
+
 # Dependencies
 cc = meson.get_compiler('c')
 m_dep = cc.find_library('m', required : false)
+opt_renderer = get_option('renderer')
 
 # Determine Platform
 platform_dep = []
@@ -45,6 +47,8 @@ if opt_platform == 'sdl'
       endif
     endif
   endif
+
+  arg_code += ['-DPLATFORM_SDL', args_sdl]
 elif opt_platform == 'sokol'
   src_platform += ['src/platform_sokol.c']
 
@@ -53,16 +57,28 @@ elif opt_platform == 'sokol'
   alsa_dep = dependency('alsa')
 
   platform_dep += [pthread_dep, alsa_dep, x_dep]
+  arg_code += ['-DPLATFORM_SOKOL']
+elif opt_platform == 'psp'
+  arg_code += ['-DPLATFORM_PSP']
+  opt_renderer = 'gu'
+elif opt_platform == 'dc'
+  arg_code += ['-DPLATFORM_DC']
+  opt_renderer = 'gl_legacy'
 else
   error('No platform chosen!')
 endif
 
 # Renderer Options
 render_dep = []
-opt_renderer = get_option('renderer')
 if opt_renderer == 'gl'
   arg_base += ['-DRENDERER_GL']
   src_renderer += ['src/render_gl.c']
+  glew_dep = dependency('glew')
+  render_dep += [glew_dep]
+elif opt_renderer == 'gl_legacy'
+  arg_base += ['-DRENDERER_GL_LEGACY']
+  #arg_base += ['-DNO_INTRO']
+  src_renderer += ['src/render_gl_legacy.c']
   glew_dep = dependency('glew')
   render_dep += [glew_dep]
 else
@@ -75,7 +91,6 @@ arg_linker = [ '-Wl,-Map=wipeout-rewrite.map' ]
 inc_base = include_directories('src', 'src/libs', 'src/wipeout')
 
 src_wipeout = ['src/wipeout/camera.c','src/wipeout/droid.c','src/wipeout/game.c','src/wipeout/hud.c','src/wipeout/image.c','src/wipeout/ingame_menus.c','src/wipeout/intro.c','src/wipeout/main_menu.c','src/wipeout/menu.c','src/wipeout/object.c','src/wipeout/particle.c','src/wipeout/race.c','src/wipeout/scene.c','src/wipeout/sfx.c','src/wipeout/ship_ai.c','src/wipeout/ship.c','src/wipeout/ship_player.c','src/wipeout/title.c','src/wipeout/track.c','src/wipeout/ui.c','src/wipeout/weapon.c']
-
 src_pc = ['src/input.c','src/mem.c','src/system.c','src/types.c','src/utils.c']
 
 src = [ src_wipeout ]
