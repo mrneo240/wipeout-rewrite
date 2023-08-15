@@ -133,7 +133,10 @@ float Sys_FloatTime(void) {
 }
 
 
+//static float cur_time = 5.0f;
 scalar_t platform_now() {
+	//cur_time += (1.0f/60.0f);
+	//return (scalar_t)cur_time;
 	return (scalar_t)Sys_FloatTime();
 }
 
