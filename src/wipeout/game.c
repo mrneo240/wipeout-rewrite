@@ -572,8 +572,11 @@ void game_init() {
 	input_bind(INPUT_LAYER_USER, INPUT_GAMEPAD_Y, A_CHANGE_VIEW);
 	input_bind(INPUT_LAYER_USER, INPUT_GAMEPAD_SELECT, A_CHANGE_VIEW);
 
-
+#if defined(NO_INTRO)
+	game_set_scene(GAME_SCENE_TITLE);
+#else
 	game_set_scene(GAME_SCENE_INTRO);
+#endif
 
 	if (file_exists("save.dat")) {
 		uint32_t size;
@@ -600,7 +603,7 @@ void game_reset_championship() {
 }
 
 void game_update() {
-	double frame_start_time = platform_now();
+	scalar_t frame_start_time = platform_now();
 
 	int sh = render_size().y;
 	int scale = max(1, sh >=  720 ? sh / 360 : sh / 240);
@@ -634,10 +637,10 @@ void game_update() {
 		printf("wrote save.dat\n");
 	}
 
-	double now = platform_now();
+	scalar_t now = platform_now();
 	g.frame_time = now - frame_start_time;
 	if (g.frame_time > 0) {
-		g.frame_rate = ((double)g.frame_rate * 0.95) + (1.0/g.frame_time) * 0.05;
+		g.frame_rate = ((scalar_t)g.frame_rate * 0.95) + (1.0/g.frame_time) * 0.05;
 	}
 }
 

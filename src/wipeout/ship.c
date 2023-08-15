@@ -165,6 +165,7 @@ void ships_draw() {
 	render_set_depth_write(false);
 	render_set_depth_offset(-32.0);
 
+	render_push_matrix();
 	for (int i = 0; i < len(g.ships); i++) {
 		if (
 			(g.race_type == RACE_TYPE_TIME_TRIAL && i != g.pilot) ||
@@ -176,6 +177,7 @@ void ships_draw() {
 
 		ship_draw_shadow(&g.ships[i]);
 	}
+	render_pop_matrix();
 
 	render_set_depth_offset(0.0);
 	render_set_depth_write(true);

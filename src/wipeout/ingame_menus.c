@@ -449,10 +449,10 @@ static void page_hall_of_fame_init(menu_t *menu) {
 
 static char * const *text_scroll_lines;
 static int text_scroll_lines_len;
-static double text_scroll_start_time;
+static scalar_t text_scroll_start_time;
 
 static void text_scroll_menu_draw(menu_t *menu, int data) {
-	double time = system_time() - text_scroll_start_time;
+	scalar_t time = system_time() - text_scroll_start_time;
 	int scale = ui_get_scale();
 	int speed = 32;
 	vec2i_t screen = render_size();
