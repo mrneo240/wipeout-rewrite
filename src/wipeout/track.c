@@ -266,6 +266,7 @@ void track_draw_section(section_t *section) {
 
 void track_draw(camera_t *camera) {	
 	render_set_model_mat(&mat4_identity());	
+	render_push_matrix();
 	
 	float max_dist_sq = RENDER_FADEOUT_FAR * RENDER_FADEOUT_FAR;
 	vec3_t cam_pos = camera->position;
@@ -279,6 +280,8 @@ void track_draw(camera_t *camera) {
 			track_draw_section(s);
 		}
 	}
+
+	render_pop_matrix();
 }
 
 void track_cycle_pickups() {

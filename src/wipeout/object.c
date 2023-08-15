@@ -457,6 +457,7 @@ void object_draw(Object *object, mat4_t *mat) {
 	int primitives_len = object->primitives_len;
 
 	render_set_model_mat(mat);
+	render_push_matrix();
 
 	// TODO: check for PRM_SINGLE_SIDED
 
@@ -775,4 +776,5 @@ void object_draw(Object *object, mat4_t *mat) {
 
 		}
 	}
+	render_pop_matrix();
 }

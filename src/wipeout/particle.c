@@ -43,10 +43,12 @@ void particles_draw() {
 	render_set_blend_mode(RENDER_BLEND_LIGHTER);
 	render_set_depth_offset(-32.0);
 
+	render_push_matrix();
 	for (int i = 0; i < particles_active; i++) {
 		particle_t *p = &particles[i];
 		render_push_sprite(p->position, p->size, p->color, p->texture);
 	}
+	render_pop_matrix();
 
 	render_set_depth_offset(0.0);
 	render_set_depth_write(true);
