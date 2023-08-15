@@ -4,6 +4,7 @@
 
 /wipeout/
 /build/
+/*builddir*/
 
 /wipegame
 /save.dat
