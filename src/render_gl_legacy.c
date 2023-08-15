@@ -49,6 +49,7 @@
 
 typedef struct {
 	vec2i_t size;
+	vec2_t scale;
 	GLuint texId;
 } render_texture_t;
 
@@ -56,6 +57,7 @@ uint16_t RENDER_NO_TEXTURE;
 
 static tris_t __attribute__((aligned(32))) tris_buffer[RENDER_TRIS_BUFFER_CAPACITY];
 static uint32_t tris_len = 0;
+static float screen_2d_z = -1;
 
 static vec2i_t screen_size;
 
@@ -72,6 +74,8 @@ static uint32_t textures_len = 0;
 static uint16_t texture_index_prev = (uint16_t)0;
 
 static void render_flush();
+void render_textures_dump(const char *path);
+void render_texture_dump(unsigned int textureNum);
 
 void render_init(vec2i_t size) {
 	#if defined(__APPLE__) && defined(__MACH__)
@@ -201,6 +205,7 @@ void render_frame_end() {
 		/* Lets us yield to other threads*/
 		glKosSwapBuffers();
 	#endif
+	screen_2d_z = -1;
 }
 
 void render_flush() {
@@ -232,12 +237,10 @@ void render_set_view(vec3_t pos, vec3_t angles) {
 
 	render_set_model_mat(&mat4_identity());
 
-	render_flush();
   glMatrixMode(GL_PROJECTION);
 	glLoadMatrixf(projection_mat_3d.m);
   glMatrixMode(GL_MODELVIEW);
 	glLoadMatrixf(view_mat.m);
-	//glPushMatrix();
 	//glUniform2f(u_fade, RENDER_FADEOUT_NEAR, RENDER_FADEOUT_FAR);
 }
 
@@ -290,7 +293,7 @@ void render_set_depth_offset(float offset) {
 	}
 
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	glPolygonOffset(offset, 1.0);
+	glPolygonOffset(offset, 5.0);
 }
 
 void render_set_screen_position(vec2_t pos) {
@@ -350,8 +353,8 @@ void render_push_tris(tris_t tris, uint16_t texture_index) {
 
 	for (int i = 0; i < 3; i++) {
 		// resize back to (0,1) uv space
-		tris.vertices[i].uv.x /= t->size.x;
-		tris.vertices[i].uv.y /= t->size.y;
+		tris.vertices[i].uv.x = (tris.vertices[i].uv.x / t->size.x) * t->scale.x;
+		tris.vertices[i].uv.y = (tris.vertices[i].uv.y / t->size.y) * t->scale.y;
 		if(tris.vertices[i].color.as_rgba.a == 0){
 			continue;
 		}
@@ -380,17 +383,16 @@ void render_push_tris(tris_t tris, uint16_t texture_index) {
 		tris.vertices[i].color.as_rgba.b = B;
 	}
 	tris_buffer[tris_len++] = tris;
-
-	//glBindTexture(GL_TEXTURE_2D, textures[RENDER_NO_TEXTURE].texId);
 }
 
 void render_push_sprite(vec3_t pos, vec2i_t size, rgba_t color, uint16_t texture_index) {
 	error_if(texture_index >= textures_len, "Invalid texture %d", texture_index);
 
-	vec3_t p1 = vec3_add(pos, vec3_transform(vec3(-size.x * 0.5, -size.y * 0.5, 0), &sprite_mat));
-	vec3_t p2 = vec3_add(pos, vec3_transform(vec3( size.x * 0.5, -size.y * 0.5, 0), &sprite_mat));
-	vec3_t p3 = vec3_add(pos, vec3_transform(vec3(-size.x * 0.5,  size.y * 0.5, 0), &sprite_mat));
-	vec3_t p4 = vec3_add(pos, vec3_transform(vec3( size.x * 0.5,  size.y * 0.5, 0), &sprite_mat));
+	screen_2d_z += 0.001f;
+	vec3_t p1 = vec3_add(pos, vec3_transform(vec3(-size.x * 0.5, -size.y * 0.5, screen_2d_z), &sprite_mat));
+	vec3_t p2 = vec3_add(pos, vec3_transform(vec3( size.x * 0.5, -size.y * 0.5, screen_2d_z), &sprite_mat));
+	vec3_t p3 = vec3_add(pos, vec3_transform(vec3(-size.x * 0.5,  size.y * 0.5, screen_2d_z), &sprite_mat));
+	vec3_t p4 = vec3_add(pos, vec3_transform(vec3( size.x * 0.5,  size.y * 0.5, screen_2d_z), &sprite_mat));
 
 	render_texture_t *t = &textures[texture_index];
 	render_push_tris((tris_t){
@@ -439,20 +441,22 @@ void render_push_2d(vec2i_t pos, vec2i_t size, rgba_t color, uint16_t texture_in
 
 void render_push_2d_tile(vec2i_t pos, vec2i_t uv_offset, vec2i_t uv_size, vec2i_t size, rgba_t color, uint16_t texture_index) {
 	error_if(texture_index >= textures_len, "Invalid texture %d", texture_index);
+
+	screen_2d_z += 0.001f;
 	render_push_tris((tris_t){
 		.vertices = {
 			{
-				.pos = {pos.x, pos.y + size.y, 0},
+				.pos = {pos.x, pos.y + size.y, screen_2d_z},
 				.uv = {uv_offset.x , uv_offset.y + uv_size.y},
 				.color = color
 			},
 			{
-				.pos = {pos.x + size.x, pos.y, 0},
+				.pos = {pos.x + size.x, pos.y, screen_2d_z},
 				.uv = {uv_offset.x +  uv_size.x, uv_offset.y},
 				.color = color
 			},
 			{
-				.pos = {pos.x, pos.y, 0},
+				.pos = {pos.x, pos.y, screen_2d_z},
 				.uv = {uv_offset.x , uv_offset.y},
 				.color = color
 			},
@@ -462,17 +466,17 @@ void render_push_2d_tile(vec2i_t pos, vec2i_t uv_offset, vec2i_t uv_size, vec2i_
 	render_push_tris((tris_t){
 		.vertices = {
 			{
-				.pos = {pos.x + size.x, pos.y + size.y, 0},
+				.pos = {pos.x + size.x, pos.y + size.y, screen_2d_z},
 				.uv = {uv_offset.x + uv_size.x, uv_offset.y + uv_size.y},
 				.color = color
 			},
 			{
-				.pos = {pos.x + size.x, pos.y, 0},
+				.pos = {pos.x + size.x, pos.y, screen_2d_z},
 				.uv = {uv_offset.x + uv_size.x, uv_offset.y},
 				.color = color
 			},
 			{
-				.pos = {pos.x, pos.y + size.y, 0},
+				.pos = {pos.x, pos.y + size.y, screen_2d_z},
 				.uv = {uv_offset.x , uv_offset.y + uv_size.y},
 				.color = color
 			},
@@ -480,14 +484,44 @@ void render_push_2d_tile(vec2i_t pos, vec2i_t uv_offset, vec2i_t uv_size, vec2i_
 	}, texture_index);
 }
 
+uint32_t upper_power_of_two(uint32_t v)
+{
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    v++;
+    return v;
+}
 
 uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels) {
 	error_if(textures_len >= TEXTURES_MAX, "TEXTURES_MAX reached");
+	void *_pixels = pixels;
+	rgba_t *pb = 0x0;
+	uint32_t tex_width = tw;
+	uint32_t tex_height = th;
 
-	// Dreamcast
+	// Dreamcast, or other platform that requires pow2 textures
 #if defined(_arch_dreamcast)
 	if(tw < 8 || th < 8){
 		return 0;
+	}
+
+	tex_width = upper_power_of_two(tw);
+	tex_height = upper_power_of_two(th);
+	// Check if npot and pad if not
+	if(tw != tex_width || th != tex_height) {
+		pb = mem_temp_alloc(sizeof(rgba_t) * tex_width * tex_height);
+		memset(pb, 0, sizeof(rgba_t) * tex_width * tex_height);
+
+		// Texture
+		for (int32_t y = 0; y < th; y++) {
+			memcpy(pb + tex_width * y , pixels + tw * y, tw * sizeof(rgba_t));
+		}
+		_pixels = pb;
+		printf("padding texture (%3d x %3d) -> (%3d x %3d)\n", tw, th, tex_width, tex_height);
 	}
 #endif
 	GLuint texId;
@@ -497,15 +531,19 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tw, th, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_width, tex_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, _pixels);
+
+	if(pb){
+		mem_temp_free(pb);
+	}
 
 	uint16_t texture_index = textures_len;
 	textures_len++;
-	textures[texture_index] = (render_texture_t){ {tw, th}, texId};
+	textures[texture_index] = (render_texture_t){ {tw, th}, {((float)tw)/((float)tex_width), ((float)th)/((float)tex_height)}, texId};
 
-	printf("created texture (%3dx%3d) size %dkb\n", tw, th, (tw*th)/1024);
+	printf("created texture (%3d x %3d) size %dkb\n", tw, th, (tw*th)/1024);
 
-	//render_texture_dump(texture_index);
+	// render_texture_dump(texture_index);
 	return texture_index;
 }
 
@@ -574,12 +612,15 @@ void render_textures_dump(const char *path) {
 void render_texture_dump(unsigned int textureNum) {
 	int width = textures[textureNum].size.x;
 	int height = textures[textureNum].size.y;
+	width = upper_power_of_two(width);
+	height = upper_power_of_two(height);
+
 	rgba_t *pixels = malloc(sizeof(rgba_t) * width * height);
 	glBindTexture(GL_TEXTURE_2D, textures[textureNum].texId);
 	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 	char path[64];
 	memset(path, 0, 64);
-	sprintf(path,"dump/texture_%d.png", textureNum);
+	sprintf(path,"dump_pad/texture_%d.png", textureNum);
 	stbi_write_png(path, width, height, 4, pixels, 0);
 	free(pixels);
 }
