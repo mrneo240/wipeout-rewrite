@@ -19,7 +19,15 @@ bool file_exists(char *path) {
 }
 
 uint8_t *file_load(char *path, uint32_t *bytes_read) {
+#if defined(_arch_dreamcast)
+	char _path[256];
+	memset(_path, 0, sizeof(path));
+	strcpy(_path, "/cd/");
+	strcat(_path, path);
+	FILE *f = fopen(_path, "rb");
+#else
 	FILE *f = fopen(path, "rb");
+#endif
 	error_if(!f, "Could not open file for reading: %s", path);
 
 	fseek(f, 0, SEEK_END);
@@ -44,6 +52,10 @@ uint8_t *file_load(char *path, uint32_t *bytes_read) {
 }
 
 uint32_t file_store(char *path, void *bytes, int32_t len) {
+	#if defined(_arch_dreamcast)
+		printf("file writing ignored! %s\n", path);
+		return len;
+	#endif
 	FILE *f = fopen(path, "wb");
 	error_if(!f, "Could not open file for writing: %s", path);
 

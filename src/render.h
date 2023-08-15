@@ -33,6 +33,8 @@ void render_set_depth_offset(float offset);
 void render_set_screen_position(vec2_t pos);
 void render_set_blend_mode(render_blend_mode_t mode);
 void render_set_cull_backface(bool enabled);
+void render_push_matrix();
+void render_pop_matrix();
 
 vec3_t render_transform(vec3_t pos);
 void render_push_tris(tris_t tris, uint16_t texture);

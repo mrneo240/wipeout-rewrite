@@ -395,6 +395,9 @@ void render_set_model_mat(mat4_t *m) {
 	glUniformMatrix4fv(u_model, 1, false, m->m);
 }
 
+void render_push_matrix() { }
+void render_pop_matrix() { }
+
 void render_set_depth_write(bool enabled) {
 	render_flush();
 	glDepthMask(enabled);

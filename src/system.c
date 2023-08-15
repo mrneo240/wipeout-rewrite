@@ -7,11 +7,11 @@
 
 #include "wipeout/game.h"
 
-static double time_real;
-static double time_scaled;
-static double time_scale = 1.0;
-static double tick_last;
-static double cycle_time = 0;
+static scalar_t time_real;
+static scalar_t time_scaled;
+static scalar_t time_scale = 1.0;
+static scalar_t tick_last;
+static scalar_t cycle_time = 0;
 
 void system_init() {
 	time_real = platform_now();
@@ -30,8 +30,8 @@ void system_exit() {
 }
 
 void system_update() {
-	double time_real_now = platform_now();
-	double real_delta = time_real_now - time_real;
+	scalar_t time_real_now = platform_now();
+	scalar_t real_delta = time_real_now - time_real;
 	time_real = time_real_now;
 	tick_last = min(real_delta, 0.1) * time_scale;
 	time_scaled += tick_last;
@@ -60,22 +60,22 @@ void system_resize(vec2i_t size) {
 	render_resize(size);
 }
 
-double system_time_scale_get() {
+scalar_t system_time_scale_get() {
 	return time_scale;
 }
 
-void system_time_scale_set(double scale) {
+void system_time_scale_set(scalar_t scale) {
 	time_scale = scale;
 }
 
-double system_tick() {
+scalar_t system_tick() {
 	return tick_last;
 }
 
-double system_time() {
+scalar_t system_time() {
 	return time_scaled;
 }
 
-double system_cycle_time() {
+scalar_t system_cycle_time() {
 	return cycle_time;
 }
