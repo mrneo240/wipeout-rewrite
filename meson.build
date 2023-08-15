@@ -60,10 +60,19 @@ elif opt_platform == 'sokol'
   arg_code += ['-DPLATFORM_SOKOL']
 elif opt_platform == 'psp'
   arg_code += ['-DPLATFORM_PSP']
+  arg_base += ['-DNO_INTRO']
   opt_renderer = 'gu'
 elif opt_platform == 'dc'
-  arg_code += ['-DPLATFORM_DC']
+  arg_code += ['-DPLATFORM_DC', '-DNDEBUG']
+  arg_base += ['-DNO_INTRO']
+  arg_base += ['-mpretend-cmove','-fsingle-precision-constant', '-ffast-math', '-O3', '-g0' ]
   opt_renderer = 'gl_legacy'
+
+  libgldc_proj = subproject('libgl')
+  libgldc_dep = libgldc_proj.get_variable('libgldc_dep')
+  platform_dep += [libgldc_dep]
+
+  src_platform += ['src/platform_dc.c']
 else
   error('No platform chosen!')
 endif
@@ -79,14 +88,16 @@ elif opt_renderer == 'gl_legacy'
   arg_base += ['-DRENDERER_GL_LEGACY']
   #arg_base += ['-DNO_INTRO']
   src_renderer += ['src/render_gl_legacy.c']
-  glew_dep = dependency('glew')
-  render_dep += [glew_dep]
+  if opt_platform == 'sokol' or opt_platform == 'sdl'
+    glew_dep = dependency('glew')
+    render_dep += [glew_dep]
+  endif
 else
   error('No renderer chosen!')
 endif
 
 arg_c = [ arg_base, arg_code ]
-arg_linker = [ '-Wl,-Map=wipeout-rewrite.map' ]
+arg_linker = [ '-Wl,-Map=wipeout-rewrite.map', '-s' ]
 
 inc_base = include_directories('src', 'src/libs', 'src/wipeout')
 
@@ -102,3 +113,21 @@ exe = executable('wipeout-rewrite', sources: [src, src_port] , include_directori
   c_args : arg_c, link_args : arg_linker,
   dependencies : [m_dep, platform_dep, render_dep],
   install : true)
+
+# Post processing
+# Dreamcast
+if opt_platform == 'dc'
+dc_binary = '1ST_READ.BIN'
+
+script_path = join_paths(meson.current_source_dir(), 'pkg_dreamcast.sh')
+custom_target('1ST_READ.BIN',
+  depends: exe,
+  input : exe,
+  output : 'fake',
+  command : [script_path, '@INPUT@', '@OUTPUT@'],
+  build_by_default : true)
+
+# Psp
+elif opt_platform == 'psp'
+
+endif
