@@ -11,6 +11,14 @@
 #elif defined(__unix__)
 	#include <GL/glew.h>
 
+// Dreamcast
+#elif defined(_arch_dreamcast)
+	#include "gl.h"
+	#include "glext.h"
+	#include "glkos.h"
+
+	#define CUSTOM_OPENGL_IMPL 1
+
 // WINDOWS
 #else
 	#include <windows.h>
@@ -68,6 +76,21 @@ void render_init(vec2i_t size) {
 	#if defined(__APPLE__) && defined(__MACH__)
 		// OSX
 		// (nothing to do here)
+		// Dreamcast
+	#elif defined(_arch_dreamcast)
+		// (nothing to do here)
+		int i=GL_DIRECT_BUFFER_KOS;
+
+		GLdcConfig config;
+    glKosInitConfig(&config);
+    config.autosort_enabled = GL_TRUE;
+    config.fsaa_enabled = GL_FALSE;
+    /*@Note: These should be adjusted at some point */
+    config.initial_op_capacity = 1024;
+    config.initial_pt_capacity = 1024;
+    config.initial_tr_capacity = 1024;
+    config.initial_immediate_capacity = 0;
+    glKosInitEx(&config);
 	#else
 		// Windows, Linux
 		glewExperimental = GL_TRUE;
@@ -89,12 +112,23 @@ void render_init(vec2i_t size) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glAlphaFunc (GL_GREATER, 0.0f);
 
+	// Dreamcast
+#if defined(_arch_dreamcast)
+	// Create white texture
+	rgba_t white_pixels[64];
+	for(uint32_t i = 0;i < 64;i++)
+	{
+		white_pixels[i] = rgba(128,128,128,255);
+	}
+	RENDER_NO_TEXTURE = render_texture_create(8, 8, white_pixels);
+#else
 	// Create white texture
 	rgba_t white_pixels[4] = {
 		rgba(128,128,128,255), rgba(128,128,128,255),
 		rgba(128,128,128,255), rgba(128,128,128,255)
 	};
 	RENDER_NO_TEXTURE = render_texture_create(2, 2, white_pixels);
+#endif
 }
 
 void render_cleanup() {
@@ -161,6 +195,11 @@ void render_frame_prepare() {
 
 void render_frame_end() {
 	render_flush();
+	// Dreamcast
+	#if defined(_arch_dreamcast)
+		/* Lets us yield to other threads*/
+		glKosSwapBuffers();
+	#endif
 }
 
 void render_flush() {
@@ -194,7 +233,6 @@ void render_set_view(vec3_t pos, vec3_t angles) {
 	glLoadMatrixf(projection_mat_3d.m);
   glMatrixMode(GL_MODELVIEW);
 	glLoadMatrixf(view_mat.m);
-	glTranslatef(pos.x, pos.y, pos.z);
 	//glUniform2f(u_fade, RENDER_FADEOUT_NEAR, RENDER_FADEOUT_FAR);
 }
 
@@ -440,6 +478,12 @@ void render_push_2d_tile(vec2i_t pos, vec2i_t uv_offset, vec2i_t uv_size, vec2i_
 uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels) {
 	error_if(textures_len >= TEXTURES_MAX, "TEXTURES_MAX reached");
 
+	// Dreamcast
+#if defined(_arch_dreamcast)
+	if(tw < 8 || th < 8){
+		return 0;
+	}
+#endif
 	GLuint texId;
   glGenTextures(1, &texId);
   glBindTexture(GL_TEXTURE_2D, texId);
@@ -507,6 +551,10 @@ void render_textures_reset(uint16_t len) {
 	}*/
 }
 
+#if defined(CUSTOM_OPENGL_IMPL)
+void render_textures_dump(const char *path) { }
+void render_texture_dump(unsigned int textureNum) { }
+#else
 void render_textures_dump(const char *path) {
 	/*int width = ATLAS_SIZE * ATLAS_GRID;
 	int height = ATLAS_SIZE * ATLAS_GRID;
@@ -529,3 +577,4 @@ void render_texture_dump(unsigned int textureNum) {
 	stbi_write_png(path, width, height, 4, pixels, 0);
 	free(pixels);
 }
+#endif
