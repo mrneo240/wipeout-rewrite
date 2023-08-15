@@ -76,6 +76,7 @@ static uint16_t texture_index_prev = (uint16_t)0;
 static void render_flush();
 void render_textures_dump(const char *path);
 void render_texture_dump(unsigned int textureNum);
+void create_white_texture();
 
 void render_init(vec2i_t size) {
 	#if defined(__APPLE__) && defined(__MACH__)
@@ -117,6 +118,10 @@ void render_init(vec2i_t size) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glAlphaFunc (GL_GREATER, 0.0f);
 
+	create_white_texture();
+}
+
+void create_white_texture(void) {
 	// Dreamcast
 #if defined(_arch_dreamcast)
 	// Create white texture
@@ -136,11 +141,11 @@ void render_init(vec2i_t size) {
 #endif
 }
 
-void render_cleanup() {
+void render_cleanup(void) {
 	// TODO
 }
 
-static void render_setup_2d_projection_mat() {
+static void render_setup_2d_projection_mat(void) {
 	float near = -1;
 	float far = 1;
 	float left = 0;
@@ -569,30 +574,25 @@ void render_textures_reset(uint16_t len) {
 	error_if(len > textures_len, "Invalid texture reset len %d >= %d", len, textures_len);
 	printf("render_textures_reset: resetting to %d of %d\n", len, textures_len);
 	render_flush();
-	return;
-	/*
-	textures_len = len;
+	GLuint texId;
 
 	// Clear completely and recreate the default white texture
 	if (len == 0) {
-		rgba_t white_pixels[4] = {
-			rgba(128,128,128,255), rgba(128,128,128,255),
-			rgba(128,128,128,255), rgba(128,128,128,255)
-		};
-		RENDER_NO_TEXTURE = render_texture_create(2, 2, white_pixels);
+		for(int i=0;i < textures_len; i++){
+			texId = textures[i].texId;
+			glDeleteTextures(1, &texId);
+		}
+		create_white_texture();
 		return;
 	}
 
-	// Replay all texture grid insertions up to the reset len
-	for (int i = 0; i < textures_len; i++) {
-		uint32_t grid_x = (textures[i].offset.x - ATLAS_BORDER) / ATLAS_GRID;
-		uint32_t grid_y = (textures[i].offset.y - ATLAS_BORDER) / ATLAS_GRID;
-		uint32_t grid_width = (textures[i].size.x + ATLAS_BORDER * 2 + ATLAS_GRID - 1) / ATLAS_GRID;
-		uint32_t grid_height = (textures[i].size.y + ATLAS_BORDER * 2 + ATLAS_GRID - 1) / ATLAS_GRID;
-		for (uint32_t cx = grid_x; cx < grid_x + grid_width; cx++) {
-			atlas_map[cx] = grid_y + grid_height;
-		}
-	}*/
+	// Delete everything above
+	for(int i=len;i < textures_len; i++){
+		texId = textures[i].texId;
+		glDeleteTextures(1, &texId);
+	}
+
+	textures_len = len;
 }
 
 #if defined(CUSTOM_OPENGL_IMPL)
