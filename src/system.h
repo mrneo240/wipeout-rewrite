@@ -13,11 +13,11 @@ void system_cleanup();
 void system_exit();
 void system_resize(vec2i_t size);
 
-double system_time();
-double system_tick();
-double system_cycle_time();
+scalar_t system_time();
+scalar_t system_tick();
+scalar_t system_cycle_time();
 void system_reset_cycle_time();
-double system_time_scale_get();
-void system_time_scale_set(double ts);
+scalar_t system_time_scale_get();
+void system_time_scale_set(scalar_t ts);
 
 #endif

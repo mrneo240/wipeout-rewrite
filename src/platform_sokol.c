@@ -153,7 +153,7 @@ vec2i_t platform_screen_size() {
 	return vec2i(sapp_width(), sapp_height());
 }
 
-double platform_now() {
+scalar_t platform_now() {
 	return stm_sec(stm_now());
 }
 

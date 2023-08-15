@@ -174,9 +174,9 @@ void platform_pump_events() {
 	}
 }
 
-double platform_now() {
+scalar_t platform_now() {
 	uint64_t perf_counter = SDL_GetPerformanceCounter();
-	return (double)perf_counter / (double)perf_freq;
+	return (scalar_t)perf_counter / (scalar_t)perf_freq;
 }
 
 void platform_set_fullscreen(bool fullscreen) {

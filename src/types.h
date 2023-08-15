@@ -7,8 +7,15 @@
 #include <stdlib.h>
 #include <math.h>
 
-typedef union rgba_t { 
-	struct { 
+// Dreamcast
+#if defined(_arch_dreamcast) || defined(__PSP__)
+typedef float scalar_t;
+#else
+typedef double scalar_t;
+#endif
+
+typedef union rgba_t {
+	struct {
 		uint8_t r, g, b, a;
 	} as_rgba;
 	uint8_t as_components[4];
@@ -34,16 +41,13 @@ typedef union {
 	float cols[4][4];
 } mat4_t;
 
-typedef struct {
-	vec3_t pos;
-	vec2_t uv;
-	rgba_t color;
-} vertex_t;
-
-typedef struct {
-	vertex_t vertices[3];
-} tris_t;
-
+#if defined(RENDERER_GL)
+	#include "render_gl_legacy_types.h"
+#elif defined(RENDERER_GL_LEGACY)
+	#include "render_gl_legacy_types.h"
+#else
+	#error "No vertex format found!"
+#endif
 
 #define rgba(R, G, B, A) ((rgba_t){.as_rgba = {.r = R, .g = G, .b = B, .a = A}})
 #define vec2(X, Y) ((vec2_t){.x = X, .y = Y})

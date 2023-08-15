@@ -54,7 +54,7 @@ typedef struct {
 
 uint16_t RENDER_NO_TEXTURE;
 
-static tris_t tris_buffer[RENDER_TRIS_BUFFER_CAPACITY];
+static tris_t __attribute__((aligned(32))) tris_buffer[RENDER_TRIS_BUFFER_CAPACITY];
 static uint32_t tris_len = 0;
 
 static vec2i_t screen_size;
@@ -69,6 +69,7 @@ static mat4_t model_mat = mat4_identity();
 
 static render_texture_t textures[TEXTURES_MAX];
 static uint32_t textures_len = 0;
+static uint16_t texture_index_prev = (uint16_t)0;
 
 static void render_flush();
 
@@ -208,9 +209,12 @@ void render_flush() {
 	}
 
 	// Send all tris
-	//glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(tris_t) * tris_len, tris_buffer, GL_DYNAMIC_DRAW);
-	//glDrawArrays(GL_TRIANGLES, 0, tris_len * 3);
+	render_texture_t *t = &textures[texture_index_prev];
+	glBindTexture(GL_TEXTURE_2D, t->texId);
+  glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), &tris_buffer[0].vertices[0].pos);
+  glTexCoordPointer(2, GL_FLOAT, sizeof(vertex_t), &tris_buffer[0].vertices[0].uv);
+  glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex_t), &tris_buffer[0].vertices[0].color);
+  glDrawArrays(GL_TRIANGLES, 0, tris_len * 3);
 	tris_len = 0;
 }
 
@@ -233,6 +237,7 @@ void render_set_view(vec3_t pos, vec3_t angles) {
 	glLoadMatrixf(projection_mat_3d.m);
   glMatrixMode(GL_MODELVIEW);
 	glLoadMatrixf(view_mat.m);
+	//glPushMatrix();
 	//glUniform2f(u_fade, RENDER_FADEOUT_NEAR, RENDER_FADEOUT_FAR);
 }
 
@@ -251,6 +256,15 @@ void render_set_view_2d() {
 
 void render_set_model_mat(mat4_t *m) {
 	memcpy(&model_mat, m, sizeof(mat4_t));
+}
+
+void render_push_matrix() {
+	glPushMatrix();
+	glMultMatrixf(model_mat.m);
+}
+void render_pop_matrix() {
+	render_flush();
+	glPopMatrix();
 }
 
 void render_set_depth_write(bool enabled) {
@@ -327,6 +341,10 @@ void render_push_tris(tris_t tris, uint16_t texture_index) {
 	if (tris_len >= RENDER_TRIS_BUFFER_CAPACITY) {
 		render_flush();
 	}
+	if(texture_index != texture_index_prev){
+		render_flush();
+	}
+	texture_index_prev = texture_index;
 
 	render_texture_t *t = &textures[texture_index];
 
@@ -361,21 +379,9 @@ void render_push_tris(tris_t tris, uint16_t texture_index) {
 		tris.vertices[i].color.as_rgba.g = G;
 		tris.vertices[i].color.as_rgba.b = B;
 	}
+	tris_buffer[tris_len++] = tris;
 
-	glPushMatrix();
-	glMultMatrixf(model_mat.m);
-
-	glBindTexture(GL_TEXTURE_2D, t->texId);
-
-  glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), &tris.vertices[0].pos);
-  glTexCoordPointer(2, GL_FLOAT, sizeof(vertex_t), &tris.vertices[0].uv);
-  glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex_t), &tris.vertices[0].color);
-  glDrawArrays(GL_TRIANGLES, 0, 3);
-	glPopMatrix();
-	glBindTexture(GL_TEXTURE_2D, textures[RENDER_NO_TEXTURE].texId);
-
-	// Figure out if we need buffer
-	//tris_buffer[tris_len++] = tris;
+	//glBindTexture(GL_TEXTURE_2D, textures[RENDER_NO_TEXTURE].texId);
 }
 
 void render_push_sprite(vec3_t pos, vec2i_t size, rgba_t color, uint16_t texture_index) {
