@@ -1,9 +1,9 @@
-// Sega Dreamcast
-#if defined(_arch_dreamcast)
+// Sony PSP
+#if defined(__PSP__)
 
 // Everything else
 #else
-	#error "Renderer only valid for Sega Dreamcast!"
+	#error "Renderer only valid for Sony PSP!"
 #endif
 
 #include "platform.h"
@@ -13,13 +13,53 @@
 #include <string.h>
 #include <sys/time.h>
 
-#include <dc/maple.h>
-#include <dc/maple/controller.h>
+#include <pspsdk.h>
+#include <pspkernel.h>
+#include <psppower.h>
+#include <pspdisplay.h>
+#include <pspgu.h>
+#include <pspgum.h>
+#include <psprtc.h>
+
 
 #define configDeadzone (0x20)
 
 static bool wants_to_exit = false;
 static void (*audio_callback)(float *buffer, uint32_t len) = NULL;
+
+// Callbacks and Exit Routines
+static int exitCallback(UNUSED int arg1, UNUSED int arg2, UNUSED void *common) {
+    J_Cleanup();
+    sceKernelTerminateDeleteThread(audio_manager_thid);
+    sceKernelExitGame();
+    return 0;
+}
+
+static int callbackThread(UNUSED SceSize args, UNUSED void *argp) {
+    int cbid;
+
+    cbid = sceKernelCreateCallback("Exit Callback", exitCallback, NULL);
+    sceKernelRegisterExitCallback(cbid);
+
+    sceKernelSleepThreadCB();
+
+    return 0;
+}
+
+// Audio Threading
+
+void init_audiomanager(void) {
+    extern int audioOutput(SceSize args, void *argp);
+    extern int audio_manager_thid;
+    audio_manager_thid = sceKernelCreateThread("AudioOutput", audioOutput, 0x12, 0x20000, THREAD_ATTR_USER | THREAD_ATTR_VFPU, NULL);
+    sceKernelStartThread(audio_manager_thid, 0, NULL);
+}
+
+void kill_audiomanager(void) {
+    J_Cleanup();
+    sceKernelTerminateDeleteThread(audio_manager_thid);
+    sceKernelDelayThread(250);
+}
 
 void platform_exit() {
 	wants_to_exit = true;
@@ -120,7 +160,7 @@ void platform_pump_events() {
 
 
 vec2i_t platform_screen_size() {
-	return vec2i(640, 480);
+	return vec2i(480, 272);
 }
 
 float Sys_FloatTime(void) {
@@ -167,13 +207,14 @@ void platform_set_audio_mix_cb(void (*cb)(float *buffer, uint32_t len)) {
 }
 
 
-#if defined(RENDERER_GL_LEGACY)
+#if defined(RENDERER_GU)
 
 	void platform_video_init() {
 	}
 
 	void platform_prepare_frame() {
-		// nothing
+    /* Lets us yield to other threads*/
+    sceKernelDelayThread(100);
 	}
 
 	void platform_video_cleanup() {
@@ -182,10 +223,22 @@ void platform_set_audio_mix_cb(void (*cb)(float *buffer, uint32_t len)) {
 	void platform_end_frame() {
 	}
 #else
-	#error "Unsupported renderer for platform Dreamcast"
+	#error "Unsupported renderer for platform Sony PSP"
 #endif
 
 int main(int argc, char *argv[]) {
+
+    int thid = 0;
+
+    thid = sceKernelCreateThread("update_thread", callbackThread, 0x20, 0xFA0, 0, 0);
+    if (thid >= 0) {
+        sceKernelStartThread(thid, 0, 0);
+    }
+
+    scePowerSetClockFrequency(333, 333, 166);
+    sceKernelDelayThread(1000);
+
+    last_time = sceKernelGetSystemTimeLow();
 
 	//audio_device = SDL_OpenAudioDevice(NULL, 0, &(SDL_AudioSpec){
 	//	.freq = 44100,
