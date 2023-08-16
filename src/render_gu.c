@@ -257,7 +257,10 @@ void render_frame_prepare() {
 
 void render_frame_end() {
 	render_flush();
-
+	//float now = platform_now();
+	//char msg[64];
+	//sprintf(msg, "end frame: %f\n", now);
+	//sceIoWrite(2, msg, strlen(msg));
 	sceGuFinish();
 	sceGuSync(0, 0);
 	sceDisplayWaitVblankStart();
