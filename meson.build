@@ -1,9 +1,10 @@
 project('wipeout-rewrite', 'c',
   version : '0.1',
-  default_options : ['warning_level=0', 'c_std=c11'])
+  default_options : ['c_std=gnu11'])
 
 # Compiler options
-arg_base = ['-std=gnu99','-Wall','-Wno-unused-variable']
+#arg_base = ['-std=gnu99','-Wall','-Wno-unused-variable']
+arg_base = ['-w']
 arg_code = []
 
 src_platform = []
@@ -64,10 +65,15 @@ elif opt_platform == 'psp'
   arg_base += ['-DNO_INTRO']
   opt_renderer = 'gu'
 
-  pspsdk_dep = declare_dependency(link_args :  ['-lpspdebug', '-lpspgu', '-lpspvfpu', '-lpspctrl', '-lpspge', '-lpspdisplay', '-lm', '-lpspsdk', '-lpsprtc', '-lpspaudio', '-lpsputility', '-lpspnet_inet', '-lpsppower', '-lc', '-lpspuser', '-lpspvram'],
+  pspsdk_dep = declare_dependency(link_args :  [],
                                 include_directories : ['/usr/local/pspdev/psp/sdk/include'] )
 
-  platform_dep += [pspsdk_dep]
+  libpspvram_proj = subproject('libpspvram')
+  libpspvram_dep = libpspvram_proj.get_variable('libpspvram_dep')
+
+  platform_dep += [pspsdk_dep, libpspvram_dep]
+  src_platform += ['src/platform_psp.c', 'src/psp_audio_stack.c']
+
 elif opt_platform == 'dc'
   arg_code += ['-DPLATFORM_DC', '-DNDEBUG']
   arg_base += ['-DNO_INTRO']
@@ -107,7 +113,9 @@ else
 endif
 
 arg_c = [ arg_base, arg_code ]
-arg_linker = [ ]
+#arg_linker = [ '-Wl,--end-group', '-lpspdebug', '-lpspgu', '-lpspvfpu', '-lpspctrl', '-lpspge', '-lpspdisplay', '-lm', '-lpspsdk', '-lpsprtc', '-lpspaudio', '-lpsputility', '-lpspnet_inet', '-lpsppower', '-lc', '-Wl,--start-group','-lpspuser' ]
+arg_linker = [ '-Wl,--end-group', '-lpspgu', '-lpspvfpu', '-lpspctrl', '-lpspge', '-lpspdisplay', '-lm', '-lpspsdk', '-lpsprtc', '-lpspaudio', '-lpsppower', '-Wl,--start-group', '-lc' ]
+
 
 inc_base = include_directories('src', 'src/libs', 'src/wipeout')
 
@@ -139,5 +147,13 @@ custom_target('1ST_READ.BIN',
 
 # Psp
 elif opt_platform == 'psp'
+psp_binary = 'EBOOT.PBP'
 
+script_path = join_paths(meson.current_source_dir(), 'pkg_psp.sh')
+custom_target('EBOOT.PBP',
+  depends: exe,
+  input : exe,
+  output : 'fake',
+  command : [script_path, '@INPUT@', '@OUTPUT@'],
+  build_by_default : true)
 endif

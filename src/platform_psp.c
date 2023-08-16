@@ -1,6 +1,15 @@
 // Sony PSP
 #if defined(__PSP__)
+#include <pspsdk.h>
+#include <pspkernel.h>
+#define MODULE_NAME "wipeout-rewrite"
+#ifndef SRC_VER
+#define SRC_VER "UNKNOWN"
+#endif
 
+PSP_MODULE_INFO(MODULE_NAME, 0, 1, 1);
+PSP_HEAP_SIZE_MAX();
+PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER | THREAD_ATTR_VFPU);
 // Everything else
 #else
 	#error "Renderer only valid for Sony PSP!"
@@ -20,6 +29,7 @@
 #include <pspgu.h>
 #include <pspgum.h>
 #include <psprtc.h>
+#include <pspctrl.h>
 
 
 #define configDeadzone (0x20)
@@ -27,9 +37,77 @@
 static bool wants_to_exit = false;
 static void (*audio_callback)(float *buffer, uint32_t len) = NULL;
 
+// Audio Threading
+#define SAMPLES_HIGH 544
+#define SAMPLES_LOW 528
+#include "psp_audio_stack.h"
+typedef int JobData;
+int volatile mediaengine_sound = 0;
+int volatile *mediaengine_sound_ptr = &mediaengine_sound;
+
+static s16 audio_buffer[SAMPLES_HIGH * 2 * 2] __attribute__((aligned(64)));
+extern struct Stack* stack;
+struct Stack *stack;
+extern void audio_psp_play(const uint8_t *buf, size_t len);
+
+int __attribute__((optimize("O0"))) run_me_audio(JobData data) {
+    (void)data;
+    //create_next_audio_buffer(audio_buffer + 0 * (SAMPLES_HIGH * 2), SAMPLES_HIGH);
+    //create_next_audio_buffer(audio_buffer + 1 * (SAMPLES_HIGH * 2), SAMPLES_HIGH);
+    return 0;
+}
+static unsigned int last_time = 0;
+static int audio_manager_thid = 0;
+
+int audioOutput(SceSize args, void *argp) {
+    (void)args;
+    (void)argp;
+    bool running = true;
+    sceKernelDelayThread(1000);
+
+    while (running) {
+        AudioTask task = stack_pop(stack);
+
+        switch (task) {
+            case NOP:       {; sceKernelDelayThread(1000 + 1000  * (mediaengine_sound)); }break;
+            case QUIT:      {; running = false; }break;
+            case GENERATE:  {;
+            {
+                run_me_audio(0);
+                sceKernelDcacheWritebackInvalidateRange(audio_buffer,sizeof(audio_buffer));
+            }
+            stack_push(stack, PLAY);
+            sceKernelDelayThread(250);
+            }
+            break;
+            case PLAY:      {;
+                //sceKernelDelayThread(100);
+                //stack_clear(stack);
+                //audio_api->play((u8 *)audio_buffer, 2 /* 2 buffers */ * SAMPLES_HIGH * sizeof(short) * 2 /* stereo */);
+            }
+            break;
+        }
+    }
+    sceIoWrite(1,"Audio Manager Exit!\n",21);
+    SceUID thid = sceKernelGetThreadId();
+    sceKernelTerminateDeleteThread(thid);
+    return 0;
+}
+
+void init_audiomanager(void) {
+    extern int audioOutput(SceSize args, void *argp);
+    extern int audio_manager_thid;
+    audio_manager_thid = sceKernelCreateThread("AudioOutput", audioOutput, 0x12, 0x20000, THREAD_ATTR_USER | THREAD_ATTR_VFPU, NULL);
+    sceKernelStartThread(audio_manager_thid, 0, NULL);
+}
+
+void kill_audiomanager(void) {
+    sceKernelTerminateDeleteThread(audio_manager_thid);
+    sceKernelDelayThread(250);
+}
+
 // Callbacks and Exit Routines
 static int exitCallback(UNUSED int arg1, UNUSED int arg2, UNUSED void *common) {
-    J_Cleanup();
     sceKernelTerminateDeleteThread(audio_manager_thid);
     sceKernelExitGame();
     return 0;
@@ -46,100 +124,49 @@ static int callbackThread(UNUSED SceSize args, UNUSED void *argp) {
     return 0;
 }
 
-// Audio Threading
-
-void init_audiomanager(void) {
-    extern int audioOutput(SceSize args, void *argp);
-    extern int audio_manager_thid;
-    audio_manager_thid = sceKernelCreateThread("AudioOutput", audioOutput, 0x12, 0x20000, THREAD_ATTR_USER | THREAD_ATTR_VFPU, NULL);
-    sceKernelStartThread(audio_manager_thid, 0, NULL);
-}
-
-void kill_audiomanager(void) {
-    J_Cleanup();
-    sceKernelTerminateDeleteThread(audio_manager_thid);
-    sceKernelDelayThread(250);
-}
-
 void platform_exit() {
 	wants_to_exit = true;
 }
 void platform_pump_events() {
-    maple_device_t *cont;
-    cont_state_t *state;
 
-    cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
-    if (!cont)
+ static SceCtrlData data;
+
+    if (!sceCtrlPeekBufferPositive(&data, 1))
         return;
-    state = (cont_state_t *) maple_dev_status(cont);
 
-    const char stickH =state->joyx;
-    const char stickV = 0xff-((uint8_t)(state->joyy));
-    const uint32_t magnitude_sq = (uint32_t)(stickH * stickH) + (uint32_t)(stickV * stickV);
+    const char stickH = data.Lx+0x80;
+    const char stickV = 0xff-(data.Ly+0x80);
 		float stick_x = 0;
 		float stick_y = 0;
+    uint32_t magnitude_sq = (uint32_t)(stickH * stickH) + (uint32_t)(stickV * stickV);
     if (magnitude_sq > (uint32_t)(configDeadzone * configDeadzone)) {
-      stick_x = ((float)stickH/127);
-    	stick_y = ((float)stickV/127);
+        stick_x = ((float)stickH/127);
+        stick_y = ((float)stickV/127);
     }
-    if (state->buttons & CONT_START){
-			input_set_button_state(INPUT_GAMEPAD_START, 1.0f);
-		} else {
-			input_set_button_state(INPUT_GAMEPAD_START, 0.0f);
-		}
-    if (state->buttons & CONT_A){
-			input_set_button_state(INPUT_GAMEPAD_A, 1.0f);
-		} else {
-			input_set_button_state(INPUT_GAMEPAD_A, 0.0f);
-		}
-		if (state->buttons & CONT_B){
-			input_set_button_state(INPUT_GAMEPAD_B, 1.0f);
-		} else {
-			input_set_button_state(INPUT_GAMEPAD_B, 0.0f);
-		}
-		if (state->buttons & CONT_X){
-			input_set_button_state(INPUT_GAMEPAD_X, 1.0f);
-		} else {
-			input_set_button_state(INPUT_GAMEPAD_X, 0.0f);
-		}
-		if (state->buttons & CONT_Y){
-			input_set_button_state(INPUT_GAMEPAD_Y, 1.0f);
-		} else {
-			input_set_button_state(INPUT_GAMEPAD_Y, 0.0f);
-		}
-    if (((uint8_t) state->ltrig & 0x80 /* 128 */))
-		{
-			input_set_button_state(INPUT_GAMEPAD_L_TRIGGER, 1.0f);
-		} else {
-			input_set_button_state(INPUT_GAMEPAD_L_TRIGGER, 0.0f);
-		}
-    if (((uint8_t) state->rtrig & 0x80 /* 128 */)){
-			input_set_button_state(INPUT_GAMEPAD_R_TRIGGER, 1.0f);
-		} else {
-			input_set_button_state(INPUT_GAMEPAD_R_TRIGGER, 0.0f);
-		}
-    if (state->buttons & CONT_DPAD_UP){
-			input_set_button_state(INPUT_GAMEPAD_DPAD_UP, 1.0f);
-		} else {
-			input_set_button_state(INPUT_GAMEPAD_DPAD_UP, 0.0f);
-		}
-		if (state->buttons & CONT_DPAD_DOWN){
-			input_set_button_state(INPUT_GAMEPAD_DPAD_DOWN, 1.0f);
-		} else {
-			input_set_button_state(INPUT_GAMEPAD_DPAD_DOWN, 0.0f);
-		}
-		if (state->buttons & CONT_DPAD_LEFT){
-			input_set_button_state(INPUT_GAMEPAD_DPAD_LEFT, 1.0f);
-		} else {
-			input_set_button_state(INPUT_GAMEPAD_DPAD_LEFT, 0.0f);
-		}
-		if (state->buttons & CONT_DPAD_RIGHT){
-			input_set_button_state(INPUT_GAMEPAD_DPAD_RIGHT, 1.0f);
-		} else {
-			input_set_button_state(INPUT_GAMEPAD_DPAD_RIGHT, 0.0f);
-		}
+
+		float btnStart =(float)(!!(data.Buttons & PSP_CTRL_START));
+		input_set_button_state(INPUT_GAMEPAD_START, btnStart);
+
+		float btnCross =(float)(!!(data.Buttons & PSP_CTRL_CROSS));
+		input_set_button_state(INPUT_GAMEPAD_A, btnCross);
+		float btnCircle =(float)(!!(data.Buttons & PSP_CTRL_CIRCLE));
+		input_set_button_state(INPUT_GAMEPAD_B, btnCircle);
+		float btnSquare =(float)(!!(data.Buttons & PSP_CTRL_SQUARE));
+		input_set_button_state(INPUT_GAMEPAD_X, btnSquare);
+		float btnTriangle =(float)(!!(data.Buttons & PSP_CTRL_TRIANGLE));
+		input_set_button_state(INPUT_GAMEPAD_Y, btnTriangle);
+
+		float btnUp =(float)(!!(data.Buttons & PSP_CTRL_UP));
+		input_set_button_state(INPUT_GAMEPAD_DPAD_UP, btnUp);
+		float btnDown =(float)(!!(data.Buttons & PSP_CTRL_DOWN));
+		input_set_button_state(INPUT_GAMEPAD_DPAD_DOWN, btnDown);
+		float btnLeft =(float)(!!(data.Buttons & PSP_CTRL_LEFT));
+		input_set_button_state(INPUT_GAMEPAD_DPAD_LEFT, btnLeft);
+		float btnRight =(float)(!!(data.Buttons & PSP_CTRL_RIGHT));
+		input_set_button_state(INPUT_GAMEPAD_DPAD_RIGHT, btnRight);
 
 		// joystick
+		/*
 		if (stick_x < 0) {
 			input_set_button_state(INPUT_GAMEPAD_L_STICK_LEFT, 0.0);
 			input_set_button_state(INPUT_GAMEPAD_L_STICK_LEFT+1, stick_x);
@@ -155,7 +182,7 @@ void platform_pump_events() {
 		else {
 			input_set_button_state(INPUT_GAMEPAD_L_STICK_UP, -stick_y);
 			input_set_button_state(INPUT_GAMEPAD_L_STICK_UP+1, 0.0);
-		}
+		}*/
 }
 
 
@@ -247,6 +274,9 @@ int main(int argc, char *argv[]) {
 	//	.samples = 4096,
 	//	.callback = platform_audio_callback
 	//}, NULL, 0);
+
+	sceCtrlSetSamplingCycle(0);
+	sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
 
 	platform_video_init();
 	system_init();
