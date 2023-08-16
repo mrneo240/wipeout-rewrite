@@ -3,11 +3,6 @@ c = '/opt/toolchains/dc/sh-elf/bin/sh-elf-gcc'
 cpp = '/opt/toolchains/dc/sh-elf/bin/sh-elf-g++'
 ar = '/opt/toolchains/dc/sh-elf/bin/sh-elf-gcc-ar'
 strip = '/opt/toolchains/dc/sh-elf/bin/sh-elf-strip'
-pkgconfig = '/usr/bin/i686-redhat-linux-gnu-pkg-config'
-llvm-config = '/usr/bin/llvm-config32'
-
-_dreamcast_kos_link_inc = []
-_dreamcast_kos_link_lib = []
 
 [built-in options]
 c_args = ['-fomit-frame-pointer', '-ml', '-m4-single-only', '-ffunction-sections', '-fdata-sections','-fno-builtin', '-D_arch_dreamcast', '-D_arch_sub_pristine', '-Wformat=0']

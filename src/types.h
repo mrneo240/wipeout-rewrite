@@ -14,6 +14,13 @@ typedef float scalar_t;
 typedef double scalar_t;
 #endif
 
+// Avoid compiler warnings for unused variables
+#ifdef __GNUC__
+#define UNUSED __attribute__((unused))
+#else
+#define UNUSED
+#endif
+
 typedef union rgba_t {
 	struct {
 		uint8_t r, g, b, a;
@@ -45,6 +52,8 @@ typedef union {
 	#include "render_gl_legacy_types.h"
 #elif defined(RENDERER_GL_LEGACY)
 	#include "render_gl_legacy_types.h"
+#elif defined(RENDERER_GU)
+	#include "render_gu_types.h"
 #else
 	#error "No vertex format found!"
 #endif

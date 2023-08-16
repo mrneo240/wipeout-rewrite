@@ -8,6 +8,7 @@ arg_code = []
 
 src_platform = []
 src_renderer = []
+platform_inc = []
 
 # Dependencies
 cc = meson.get_compiler('c')
@@ -62,6 +63,11 @@ elif opt_platform == 'psp'
   arg_code += ['-DPLATFORM_PSP']
   arg_base += ['-DNO_INTRO']
   opt_renderer = 'gu'
+
+  pspsdk_dep = declare_dependency(link_args :  ['-lpspdebug', '-lpspgu', '-lpspvfpu', '-lpspctrl', '-lpspge', '-lpspdisplay', '-lm', '-lpspsdk', '-lpsprtc', '-lpspaudio', '-lpsputility', '-lpspnet_inet', '-lpsppower', '-lc', '-lpspuser', '-lpspvram'],
+                                include_directories : ['/usr/local/pspdev/psp/sdk/include'] )
+
+  platform_dep += [pspsdk_dep]
 elif opt_platform == 'dc'
   arg_code += ['-DPLATFORM_DC', '-DNDEBUG']
   arg_base += ['-DNO_INTRO']
@@ -92,12 +98,16 @@ elif opt_renderer == 'gl_legacy'
     glew_dep = dependency('glew')
     render_dep += [glew_dep]
   endif
+elif opt_renderer == 'gu'
+  arg_base += ['-DRENDERER_GU']
+  #arg_base += ['-DNO_INTRO']
+  src_renderer += ['src/render_gu.c', 'src/psp_texture_manager.c']
 else
   error('No renderer chosen!')
 endif
 
 arg_c = [ arg_base, arg_code ]
-arg_linker = [ '-Wl,-Map=wipeout-rewrite.map', '-s' ]
+arg_linker = [ ]
 
 inc_base = include_directories('src', 'src/libs', 'src/wipeout')
 
@@ -106,7 +116,7 @@ src_pc = ['src/input.c','src/mem.c','src/system.c','src/types.c','src/utils.c']
 
 src = [ src_wipeout ]
 src_port = [ src_pc, src_platform, src_renderer ]
-inc = [ inc_base ]
+inc = [ inc_base, platform_inc ]
 
 # wipeout-rewrite binary
 exe = executable('wipeout-rewrite', sources: [src, src_port] , include_directories : inc,

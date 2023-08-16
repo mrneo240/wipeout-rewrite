@@ -1,2 +1,2 @@
-option('renderer', type : 'combo', choices : ['gl', 'gl_legacy'], value : 'gl')
+option('renderer', type : 'combo', choices : ['gl', 'gl_legacy', 'gu'], value : 'gl')
 option('platform', type : 'combo', choices : ['sdl', 'sokol', 'psp', 'dc'], value : 'sdl')

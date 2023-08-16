@@ -1,0 +1,25 @@
+[binaries]
+c = '/usr/local/pspdev/bin/psp-gcc'
+cpp = '/usr/local/pspdev/bin/psp-g++'
+ar = '/usr/local/pspdev/bin/psp-gcc-ar'
+strip = '/usr/local/pspdev/bin/psp-strip'
+pkgconfig = '/usr/local/pspdev/bin/psp-pkg-config'
+
+[built-in options]
+c_args = ['-DTARGET_PSP', '-DPSP', '-D__PSP__', '-G0', '-D_PSP_FW_VERSION=500', '-DNDEBUG', '-Wformat=0', '-O3', '-falign-functions=64', '-flimit-function-alignment', '-g3', '-fno-rounding-math', '-ffp-contract=off', '-Wfatal-errors', '-fsigned-char']
+c_link_args = ['-march=mips32', '-I/usr/local/pspdev/psp/sdk/lib', '-L/usr/local/pspdev/psp/sdk/lib', '-L/usr/local/pspdev/psp/lib', '-specs=/usr/local/pspdev/psp/sdk/lib/prxspecs', '-Wl,-q,-T/usr/local/pspdev/psp/sdk/lib/linkfile.prx', '/usr/local/pspdev/psp/sdk/lib/prxexports.o'  ]
+cpp_args = []
+cpp_link_args = []
+prefix = '/usr/local/pspdev/psp'
+libdir = 'lib'
+bindir = 'bin'
+
+[properties]
+#pkg_config_libdir = '/usr/lib/pkgconfig'
+#pkg_config_path = '/usr/lib/pkgconfig'
+
+[host_machine]
+system = 'psp'
+cpu_family = 'mips'
+cpu = 'mips'
+endian = 'little'
