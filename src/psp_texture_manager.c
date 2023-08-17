@@ -7,7 +7,6 @@
  * Copyright (c) 2020 Hayden Kowalchuk, Hayden Kowalchuk
  * License: BSD 3-clause "New" or "Revised" License, http://www.opensource.org/licenses/BSD-3-Clause
  */
-#define DEBUG
 #include "psp_texture_manager.h"
 #include <string.h>
 #include <pspkernel.h>
