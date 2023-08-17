@@ -252,7 +252,7 @@ void render_frame_prepare()
 	//sceGuEnable(GU_DEPTH_TEST);
 	//sceGuDepthMask(GU_TRUE);
 	//sceGuDepthOffset(0);
-	//sceGuEnable(GU_TEXTURE_2D);
+	sceGuEnable(GU_TEXTURE_2D);
 }
 
 void render_frame_end()
@@ -317,6 +317,7 @@ void render_set_view_2d()
 
 	sceGuSetMatrix(GU_PROJECTION, (const ScePspFMatrix4 *)projection_mat_2d.m);
 	sceGuSetMatrix(GU_VIEW, (const ScePspFMatrix4 *)identity_matrix.m);
+	sceGuSetMatrix(GU_MODEL, (const ScePspFMatrix4 *)identity_matrix.m);
 }
 
 void render_set_model_mat(mat4_t *m)
