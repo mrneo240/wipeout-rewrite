@@ -6,6 +6,7 @@ project('wipeout-rewrite', 'c',
 #arg_base = ['-std=gnu99','-Wall','-Wno-unused-variable']
 arg_base = ['-w']
 arg_code = []
+arg_linker = []
 
 src_platform = []
 src_renderer = []
@@ -64,6 +65,7 @@ elif opt_platform == 'psp'
   arg_code += ['-DPLATFORM_PSP']
   arg_base += ['-DNO_INTRO']
   opt_renderer = 'gu'
+  arg_linker += [ '-Wl,--end-group', '-lpspgu', '-lpspvfpu', '-lpspctrl', '-lpspge', '-lpspdisplay', '-lm', '-lpspsdk', '-lpsprtc', '-lpspaudio', '-lpsppower', '-Wl,--start-group', '-lc' ]
 
   pspsdk_dep = declare_dependency(link_args :  [],
                                 include_directories : ['/usr/local/pspdev/psp/sdk/include'] )
@@ -114,7 +116,6 @@ endif
 
 arg_c = [ arg_base, arg_code ]
 #arg_linker = [ '-Wl,--end-group', '-lpspdebug', '-lpspgu', '-lpspvfpu', '-lpspctrl', '-lpspge', '-lpspdisplay', '-lm', '-lpspsdk', '-lpsprtc', '-lpspaudio', '-lpsputility', '-lpspnet_inet', '-lpsppower', '-lc', '-Wl,--start-group','-lpspuser' ]
-arg_linker = [ '-Wl,--end-group', '-lpspgu', '-lpspvfpu', '-lpspctrl', '-lpspge', '-lpspdisplay', '-lm', '-lpspsdk', '-lpsprtc', '-lpspaudio', '-lpsppower', '-Wl,--start-group', '-lc' ]
 
 
 inc_base = include_directories('src', 'src/libs', 'src/wipeout')
