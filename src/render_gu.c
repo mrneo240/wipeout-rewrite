@@ -43,7 +43,6 @@ uint16_t RENDER_NO_TEXTURE;
 
 static tris_t __attribute__((aligned(32))) tris_buffer[RENDER_TRIS_BUFFER_CAPACITY];
 static uint32_t tris_len = 0;
-static float screen_2d_z = -1;
 
 static vec2i_t screen_size;
 
@@ -129,7 +128,7 @@ void render_init(vec2i_t size)
 	sceGuDispBuffer(SCR_WIDTH, SCR_HEIGHT, fbp1, BUF_WIDTH);
 	sceGuDepthBuffer(zbp, BUF_WIDTH);
 	sceGuOffset(2048 - (SCR_WIDTH / 2), 2048 - (SCR_HEIGHT / 2));
-	sceGuViewport(2048 - (SCR_WIDTH / 2), 2048 - (SCR_HEIGHT / 2), SCR_WIDTH, SCR_HEIGHT);
+	sceGuViewport(2048, 2048, SCR_WIDTH, SCR_HEIGHT);
 	sceGuDepthRange(0xffff, 0);
 	sceGuScissor(0, 0, SCR_WIDTH, SCR_HEIGHT);
 	sceGuEnable(GU_SCISSOR_TEST);
@@ -145,15 +144,15 @@ void render_init(vec2i_t size)
 	sceGuDepthMask(GU_FALSE);
 	sceGuTexEnvColor(0xffffffff);
 	sceGuTexOffset(0.0f, 0.0f);
-	sceGuTexWrap(GU_REPEAT, GU_REPEAT);
+	sceGuTexWrap(GU_CLAMP, GU_CLAMP);
 
 	sceGuFinish();
 	sceGuSync(0, 0);
 	sceDisplayWaitVblankStart();
 	sceGuDisplay(GU_TRUE);
 
-	uint32_t buffer_size = 4*1024*1024;
-	void *texman_buffer = malloc(buffer_size); //getStaticVramBufferBytes(buffer_size);
+	uint32_t buffer_size = 9 * 1024 * 1024;
+	void *texman_buffer = malloc(buffer_size); // getStaticVramBufferBytes(buffer_size);
 	void *texman_aligned = (void *)((((unsigned int)texman_buffer + TEX_ALIGNMENT - 1) / TEX_ALIGNMENT) * TEX_ALIGNMENT);
 	texman_reset(&vramTexman, texman_aligned, buffer_size);
 	if (!texman_buffer)
@@ -171,32 +170,16 @@ void render_init(vec2i_t size)
 	render_set_view(vec3(0, 0, 0), vec3(0, 0, 0));
 	render_set_model_mat(&mat4_identity());
 
-	// glEnable(GL_CULL_FACE);
-	sceGuEnable(GU_BLEND);
-	sceGuEnable(GU_TEXTURE_2D);
-	// glAlphaFunc (GL_GREATER, 0.0f);
-
 	create_white_texture();
 }
 
 void create_white_texture(void)
 {
-	// Dreamcast
-#if defined(_arch_dreamcast)
-	// Create white texture
-	rgba_t white_pixels[64];
-	for (uint32_t i = 0; i < 64; i++)
-	{
-		white_pixels[i] = rgba(128, 128, 128, 255);
-	}
-	RENDER_NO_TEXTURE = render_texture_create(8, 8, white_pixels);
-#else
 	// Create white texture
 	rgba_t white_pixels[4] = {
 			rgba(128, 128, 128, 255), rgba(128, 128, 128, 255),
 			rgba(128, 128, 128, 255), rgba(128, 128, 128, 255)};
 	RENDER_NO_TEXTURE = render_texture_create(2, 2, white_pixels);
-#endif
 }
 
 void render_cleanup(void)
@@ -241,10 +224,8 @@ static void render_setup_3d_projection_mat()
 
 void render_resize(vec2i_t size)
 {
-	// Do we need this?
 	sceGuOffset(2048 - (SCR_WIDTH / 2), 2048 - (SCR_HEIGHT / 2));
-	sceGuViewport(2048 - (SCR_WIDTH / 2), 2048 - (SCR_HEIGHT / 2), SCR_WIDTH, SCR_HEIGHT);
-
+	sceGuViewport(2048, 2048, SCR_WIDTH, SCR_HEIGHT);
 	screen_size = size;
 
 	render_setup_2d_projection_mat();
@@ -268,11 +249,10 @@ void render_frame_prepare()
 	sceGuClear(GU_COLOR_BUFFER_BIT | GU_DEPTH_BUFFER_BIT);
 	sceGuEnable(GU_SCISSOR_TEST);
 
-	sceGuEnable(GU_DEPTH_TEST);
-	sceGuDepthMask(GU_TRUE);
-	// glDisable(GL_POLYGON_OFFSET_FILL);
-	sceGuEnable(GU_TEXTURE_2D);
-	// glBindTexture(GL_TEXTURE_2D, textures[RENDER_NO_TEXTURE].texId);
+	//sceGuEnable(GU_DEPTH_TEST);
+	//sceGuDepthMask(GU_TRUE);
+	//sceGuDepthOffset(0);
+	//sceGuEnable(GU_TEXTURE_2D);
 }
 
 void render_frame_end()
@@ -296,7 +276,7 @@ void render_flush()
 	render_texture_t *t = &textures[texture_index_prev];
 	texman_bind_tex(&vramTexman, t->texId);
 
-	void *buf = (void*)ALIGN((unsigned int)sceGuGetMemory(sizeof(tris_t) * tris_len+15), 16);
+	void *buf = (void *)ALIGN((unsigned int)sceGuGetMemory(sizeof(tris_t) * tris_len + 15), 16);
 	memcpy(buf, tris_buffer, sizeof(tris_t) * tris_len);
 	sceGuDrawArray(GU_TRIANGLES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, 3 * tris_len, 0, buf);
 
@@ -347,23 +327,21 @@ void render_set_model_mat(mat4_t *m)
 void render_push_matrix()
 {
 	/* Allocate space in DL for current model matrix */
-	void *matrix_inline = (void *)ALIGN((unsigned int)sceGuGetMemory(sizeof(mat4_t) + 15), 16);
-	memcpy(matrix_inline, model_mat.m, sizeof(mat4_t));
-	sceGuSetMatrix(GU_MODEL, (const ScePspFMatrix4 *)matrix_inline);
+	void *matrix_inline_model = (void *)ALIGN((unsigned int)sceGuGetMemory(sizeof(mat4_t) + 15), 16);
+	memcpy(matrix_inline_model, model_mat.m, sizeof(mat4_t));
+	sceGuSetMatrix(GU_MODEL, (const ScePspFMatrix4 *)matrix_inline_model);
 }
-
 void render_pop_matrix()
 {
 	render_flush();
 
 	sceGuSetMatrix(GU_MODEL, (const ScePspFMatrix4 *)identity_matrix.m);
-	// glPopMatrix();
 }
 
 void render_set_depth_write(bool enabled)
 {
 	render_flush();
-	sceGuDepthMask(enabled);
+	sceGuDepthMask(enabled ? GU_FALSE : GU_TRUE);
 }
 
 void render_set_depth_test(bool enabled)
@@ -384,28 +362,17 @@ void render_set_depth_offset(float offset)
 	render_flush();
 	if (offset == 0)
 	{
-		// sceGuDepthOffset(0);
-		// glDisable(GL_POLYGON_OFFSET_FILL);
+		sceGuDepthOffset(0);
 		return;
 	}
 
-	// glEnable(GL_POLYGON_OFFSET_FILL);
-	// sceGuDepthOffset(32); /* I think we need a little more on psp because of 16bit depth buffer */
+	sceGuDepthOffset(0); /* I think we need a little more on psp because of 16bit depth buffer */
 }
 
 void render_set_screen_position(vec2_t pos)
 {
 	render_flush();
-	if (pos.x == 0 && pos.y == 0)
-	{
-		// glPopMatrix();
-		return;
-	}
-
-	// glPushMatrix();
-	//  Todo:
-	//  recalc new modified view matrix to move correct units in NDC
-	//  load that new matrix
+	// glUniform2f(u_screen, pos.x, -pos.y);
 }
 
 void render_set_blend_mode(render_blend_mode_t new_mode)
@@ -423,7 +390,7 @@ void render_set_blend_mode(render_blend_mode_t new_mode)
 	}
 	else if (blend_mode == RENDER_BLEND_LIGHTER)
 	{
-		sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_FIX, 0, 1);
+		sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_DST_ALPHA, 0, 0);
 	}
 }
 
@@ -510,11 +477,10 @@ void render_push_sprite(vec3_t pos, vec2i_t size, rgba_t color, uint16_t texture
 {
 	error_if(texture_index >= textures_len, "Invalid texture %d", texture_index);
 
-	screen_2d_z += 0.001f;
-	vec3_t p1 = vec3_add(pos, vec3_transform(vec3(-size.x * 0.5, -size.y * 0.5, screen_2d_z), &sprite_mat));
-	vec3_t p2 = vec3_add(pos, vec3_transform(vec3(size.x * 0.5, -size.y * 0.5, screen_2d_z), &sprite_mat));
-	vec3_t p3 = vec3_add(pos, vec3_transform(vec3(-size.x * 0.5, size.y * 0.5, screen_2d_z), &sprite_mat));
-	vec3_t p4 = vec3_add(pos, vec3_transform(vec3(size.x * 0.5, size.y * 0.5, screen_2d_z), &sprite_mat));
+	vec3_t p1 = vec3_add(pos, vec3_transform(vec3(-size.x * 0.5, -size.y * 0.5, 0), &sprite_mat));
+	vec3_t p2 = vec3_add(pos, vec3_transform(vec3(size.x * 0.5, -size.y * 0.5, 0), &sprite_mat));
+	vec3_t p3 = vec3_add(pos, vec3_transform(vec3(-size.x * 0.5, size.y * 0.5, 0), &sprite_mat));
+	vec3_t p4 = vec3_add(pos, vec3_transform(vec3(size.x * 0.5, size.y * 0.5, 0), &sprite_mat));
 
 	render_texture_t *t = &textures[texture_index];
 	render_push_tris((tris_t){
@@ -554,16 +520,15 @@ void render_push_2d_tile(vec2i_t pos, vec2i_t uv_offset, vec2i_t uv_size, vec2i_
 {
 	error_if(texture_index >= textures_len, "Invalid texture %d", texture_index);
 
-	screen_2d_z += 0.001f;
 	render_push_tris((tris_t){
 											 .vertices = {
-													 {.pos = {pos.x, pos.y + size.y, screen_2d_z},
+													 {.pos = {pos.x, pos.y + size.y, 0},
 														.uv = {uv_offset.x, uv_offset.y + uv_size.y},
 														.color = color},
-													 {.pos = {pos.x + size.x, pos.y, screen_2d_z},
+													 {.pos = {pos.x + size.x, pos.y, 0},
 														.uv = {uv_offset.x + uv_size.x, uv_offset.y},
 														.color = color},
-													 {.pos = {pos.x, pos.y, screen_2d_z},
+													 {.pos = {pos.x, pos.y, 0},
 														.uv = {uv_offset.x, uv_offset.y},
 														.color = color},
 											 }},
@@ -571,13 +536,13 @@ void render_push_2d_tile(vec2i_t pos, vec2i_t uv_offset, vec2i_t uv_size, vec2i_
 
 	render_push_tris((tris_t){
 											 .vertices = {
-													 {.pos = {pos.x + size.x, pos.y + size.y, screen_2d_z},
+													 {.pos = {pos.x + size.x, pos.y + size.y, 0},
 														.uv = {uv_offset.x + uv_size.x, uv_offset.y + uv_size.y},
 														.color = color},
-													 {.pos = {pos.x + size.x, pos.y, screen_2d_z},
+													 {.pos = {pos.x + size.x, pos.y, 0},
 														.uv = {uv_offset.x + uv_size.x, uv_offset.y},
 														.color = color},
-													 {.pos = {pos.x, pos.y + size.y, screen_2d_z},
+													 {.pos = {pos.x, pos.y + size.y, 0},
 														.uv = {uv_offset.x, uv_offset.y + uv_size.y},
 														.color = color},
 											 }},
@@ -596,6 +561,8 @@ static uint32_t upper_power_of_two(uint32_t v)
 	v |= v >> 4;
 	v |= v >> 8;
 	v |= v >> 16;
+	v |= v >> 32;
+	v |= v >> 64;
 	v++;
 	return v;
 }
@@ -606,7 +573,7 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels)
 	rgba_t *pb = 0x0;
 	uint32_t tex_width = tw;
 	uint32_t tex_height = th;
-	uint32_t texId  = 0;
+	uint32_t texId = 0xffff;
 
 	if (ispow2(tex_width) && ispow2(tex_height))
 	{
@@ -617,7 +584,6 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels)
 		}
 
 		texId = texman_create(&vramTexman);
-		// texman_upload_swizzle(tex_width, tex_height, GU_PSM_8888, (void *) _pixels);
 		texman_upload(&vramTexman, tex_width, tex_height, GU_PSM_8888, pixels);
 	}
 	else
@@ -642,7 +608,7 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels)
 		texman_upload(&vramTexman, tex_width, tex_height, GU_PSM_8888, (void *)pb);
 	}
 
-	sceGuTexFilter(GU_LINEAR, GU_LINEAR); // GU_NEAREST
+	sceGuTexFilter(GU_NEAREST, GU_LINEAR);
 	sceGuTexWrap(GU_CLAMP, GU_CLAMP);
 
 	if (pb)
@@ -650,7 +616,8 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels)
 		mem_temp_free(pb);
 	}
 
-	if(texId == 0){
+	if (texId == 0xffff)
+	{
 		fprintf(2, "Texman Creation error!\n");
 		return 0;
 	}
