@@ -270,6 +270,7 @@ void render_push_matrix() {
 	glPushMatrix();
 	glMultMatrixf(model_mat.m);
 }
+
 void render_pop_matrix() {
 	render_flush();
 	glPopMatrix();
@@ -304,11 +305,11 @@ void render_set_depth_offset(float offset) {
 void render_set_screen_position(vec2_t pos) {
 	render_flush();
 	if(pos.x ==0 && pos.y == 0){
-		glPopMatrix();
+		//glPopMatrix();
 		return;
 	}
 
-	glPushMatrix();
+	//glPushMatrix();
 	// Todo:
 	// recalc new modified view matrix to move correct units in NDC
 	// load that new matrix

@@ -7,7 +7,7 @@
  * Copyright (c) 2020 Hayden Kowalchuk, Hayden Kowalchuk
  * License: BSD 3-clause "New" or "Revised" License, http://www.opensource.org/licenses/BSD-3-Clause
  */
-#if defined(TARGET_PSP)
+#define DEBUG
 #include "psp_texture_manager.h"
 #include <string.h>
 #include <pspkernel.h>
@@ -16,13 +16,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
-static struct PSP_Texture textures[512];
-static void *psp_tex_buffer = NULL;
-static void *psp_tex_buffer_start = NULL;
-static void *psp_tex_buffer_max = NULL;
-static unsigned int psp_tex_number = 0;
-unsigned int psp_tex_bound = 0;
 
 static inline unsigned int getMemorySize(int width, int height, unsigned int psm) {
     switch (psm) {
@@ -101,15 +94,18 @@ static void swizzle_fast(unsigned char *out, const unsigned char *in, unsigned i
     }
 }
 
-int texman_inited(void) {
-    return psp_tex_buffer != 0;
+int texman_inited(Texman_State *state) {
+    return state->psp_tex_buffer != 0;
 }
 
-void texman_reset(void *buf, unsigned int size) {
-    memset(textures, 0, sizeof(textures));
-    psp_tex_number = 0;
-    psp_tex_buffer = psp_tex_buffer_start = buf;
-    psp_tex_buffer_max = buf + size;
+void texman_reset(Texman_State *state, void *buf, unsigned int size) {
+    memset(state->textures, 0, sizeof(state->textures));
+    state->psp_tex_number = 0;
+    state->psp_tex_bound = 0;
+    state->psp_tex_buffer = buf;
+    state->psp_tex_buffer_start = buf;
+    state->psp_tex_buffer_max = buf + size;
+    state->buffer_size = size;
 #ifdef DEBUG
     char msg[64];
     sprintf(msg, "TEXMAN reset @ %p size %d bytes\n", buf, size);
@@ -117,66 +113,68 @@ void texman_reset(void *buf, unsigned int size) {
 #endif
 }
 
-void texman_clear(void) {
-    memset(textures, 0, sizeof(textures));
-    psp_tex_number = 0;
-    psp_tex_buffer = psp_tex_buffer_start;
+void texman_clear(Texman_State *state) {
+    memset(state->textures, 0, sizeof(state->textures));
+    state->psp_tex_number = 0;
+    state->psp_tex_buffer = state->psp_tex_buffer_start;
+    // The below is for safety if you use the API wrong
+    state->textures[0].location = state->psp_tex_buffer;
 #ifdef DEBUG
     char msg[64];
-    sprintf(msg, "TEXMAN clear %p size %d bytes!\n", psp_tex_buffer, TEXMAN_BUFFER_SIZE);
+    sprintf(msg, "TEXMAN clear %p size %d bytes, buffer @ %p!\n", state->psp_tex_buffer, state->buffer_size, state->psp_tex_buffer);
     sceIoWrite(1, msg, strlen(msg));
 #endif
 }
 
-void texman_set_buffer(void *buf, unsigned int size) {
-    psp_tex_buffer = buf;
-    psp_tex_buffer_max = buf + size;
+void texman_set_buffer(Texman_State *state, void *buf, unsigned int size) {
+    state->psp_tex_buffer = buf;
+    state->psp_tex_buffer_max = buf + size;
 }
 
-int gfx_vram_space_available(void) {
-    return (psp_tex_buffer_max - psp_tex_buffer) > (32 * 1024);
+int texman_space_available(Texman_State *state, unsigned int size) {
+    return (state->psp_tex_buffer_max - state->psp_tex_buffer) >= size;
 }
 
-unsigned char *texman_get_tex_data(unsigned int num) {
-    return textures[num].location;
+unsigned char *texman_get_tex_data(Texman_State *state, unsigned int num) {
+    return state->textures[num].location;
 }
 
-unsigned char texman_get_tex_type(unsigned int num) {
-    return textures[num].type;
+unsigned char texman_get_tex_type(Texman_State *state, unsigned int num) {
+    return state->textures[num].type;
 }
 
-struct PSP_Texture *texman_reserve_memory(int width, int height, unsigned int type) {
+struct PSP_Texture *texman_reserve_memory(Texman_State *state, int width, int height, unsigned int type) {
     int tex_size = getMemorySize(width, height, type);
-    psp_tex_buffer =
-        (void *) ((((unsigned int) psp_tex_buffer + tex_size + TEX_ALIGNMENT - 1) / TEX_ALIGNMENT)
+    state->psp_tex_buffer =
+        (void *) ((((unsigned int) state->psp_tex_buffer + tex_size + TEX_ALIGNMENT - 1) / TEX_ALIGNMENT)
                   * TEX_ALIGNMENT);
 #ifdef DEBUG
-    printf("TEX_MAN tex [%d] reserved %d bytes @ %x left: %d kb\n", psp_tex_number, tex_size,
-           (unsigned int) textures[psp_tex_number].location,
-           (psp_tex_buffer_max - psp_tex_buffer) / 1024);
+    printf("TEX_MAN tex [%d] reserved %d bytes @ %x left: %d kb\n", state->psp_tex_number, tex_size,
+           (unsigned int) state->textures[state->psp_tex_number].location,
+           (state->psp_tex_buffer_max - state->psp_tex_buffer) / 1024);
 #endif
-    return &textures[psp_tex_number];
+    return &state->textures[state->psp_tex_number];
 }
 
-unsigned int texman_create(void) {
-    psp_tex_number++;
-    textures[psp_tex_number] = (struct PSP_Texture){
-        location : psp_tex_buffer,
+unsigned int texman_create(Texman_State *state) {
+    state->psp_tex_number++;
+    state->textures[state->psp_tex_number] = (struct PSP_Texture){
+        location : state->psp_tex_buffer,
         width : 0,
         height : 0,
         type : 0,
         swizzled : 0
     };
-    psp_tex_bound = psp_tex_number;
+    state->psp_tex_bound = state->psp_tex_number;
 
 #ifdef DEBUG
-    printf("TEX_MAN new tex [%d] @ %x\n", psp_tex_number, psp_tex_buffer);
+    printf("TEX_MAN new tex [%d] @ %x\n", state->psp_tex_number, state->psp_tex_buffer);
 #endif
-    return psp_tex_number;
+    return state->psp_tex_number;
 }
 
-void texman_upload_swizzle(int width, int height, unsigned int type, const void *buffer) {
-    struct PSP_Texture *current = texman_reserve_memory(width, height, type);
+void texman_upload_swizzle(Texman_State *state, int width, int height, unsigned int type, const void *buffer) {
+    struct PSP_Texture *current = texman_reserve_memory(state, width, height, type);
     sceKernelDcacheWritebackRange(buffer, getMemorySize(width, height, type));
     current->width = width;
     current->height = height;
@@ -185,31 +183,48 @@ void texman_upload_swizzle(int width, int height, unsigned int type, const void 
     swizzle_fast(current->location, buffer, getTexWidthBytes(width, type), height);
     current->swizzled = GU_TRUE;
 #ifdef DEBUG
-    printf("TEX_MAN upload swizzled [%d]\n", psp_tex_number);
+    printf("TEX_MAN upload swizzled [%d]\n", state->psp_tex_number);
 #endif
     sceKernelDcacheWritebackRange(current->location, getMemorySize(width, height, type));
     sceKernelDcacheInvalidateRange(current->location, getMemorySize(width, height, type));
-    texman_bind_tex(psp_tex_number);
+    texman_bind_tex(state, state->psp_tex_number);
 }
 
-void texman_upload(int width, int height, unsigned int type, const void *buffer) {
-    struct PSP_Texture *current = texman_reserve_memory(width, height, type);
-    sceKernelDcacheWritebackRange(buffer, getMemorySize(width, height, type));
+void texman_upload(Texman_State *state, int width, int height, unsigned int type, const void *buffer) {
+    struct PSP_Texture *current = texman_reserve_memory(state, width, height, type);
+    const unsigned int tex_size = getMemorySize(width, height, type);
+    sceKernelDcacheWritebackRange(buffer, tex_size);
     current->width = width;
     current->height = height;
     current->type = type;
     current->swizzled = GU_FALSE;
-    memcpy(current->location, buffer, getMemorySize(width, height, type));
+    memcpy(current->location, buffer, tex_size);
 #ifdef DEBUG
-    // printf("TEX_MAN upload plain [%d]\n", psp_tex_number);
+    // printf("TEX_MAN upload plain [%d]\n", state->psp_tex_number);
 #endif
-    sceKernelDcacheWritebackRange(current->location, getMemorySize(width, height, type));
-    sceKernelDcacheInvalidateRange(current->location, getMemorySize(width, height, type));
-    texman_bind_tex(psp_tex_number);
+    sceKernelDcacheWritebackRange(current->location, tex_size);
+    sceKernelDcacheInvalidateRange(current->location, tex_size);
+    texman_bind_tex(state, state->psp_tex_number);
 }
 
-void texman_bind_tex(unsigned int num) {
-    const struct PSP_Texture *current = &textures[num];
+void texman_store(Texman_State *state, int width, int height, unsigned int type, const void *buffer) {
+    struct PSP_Texture *current = texman_reserve_memory(state, width, height, type);
+    const unsigned int tex_size = getMemorySize(width, height, type);
+    sceKernelDcacheWritebackRange(buffer, tex_size);
+    current->width = width;
+    current->height = height;
+    current->type = type;
+    current->swizzled = GU_FALSE;
+    memcpy(current->location, buffer, tex_size);
+#ifdef DEBUG
+    // printf("TEX_MAN upload plain [%d]\n", state->psp_tex_number);
+#endif
+    sceKernelDcacheWritebackRange(current->location, tex_size);
+    sceKernelDcacheInvalidateRange(current->location, tex_size);
+}
+
+void texman_bind_tex(Texman_State *state, unsigned int num) {
+    const struct PSP_Texture *current = &state->textures[num];
 #ifdef DEBUG
     /* Note this will SPAM if you enable */
     // if (psp_tex_bound != num)
@@ -217,10 +232,9 @@ void texman_bind_tex(unsigned int num) {
 #endif
     sceGuTexMode(current->type, 0, 0, current->swizzled);
     sceGuTexImage(0, current->width, current->height, current->width, current->location);
-    psp_tex_bound = num;
+    state->psp_tex_bound = num;
 }
 
-unsigned int texman_get_bound(void) {
-    return psp_tex_bound;
+unsigned int texman_get_bound(Texman_State *state) {
+    return state->psp_tex_bound;
 }
-#endif

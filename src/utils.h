@@ -5,6 +5,9 @@
 #include "types.h"
 
 
+// align value to N-byte boundary
+#define ALIGN(VAL_, ALIGNMENT_) (((VAL_) + ((ALIGNMENT_) - 1)) & ~((ALIGNMENT_) - 1))
+
 #if !defined(offsetof)
 	#define offsetof(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
 #endif

@@ -3,13 +3,13 @@
 
 #include "types.h"
 
-typedef struct {
+typedef struct __attribute__((packed, aligned(4))) {
 	vec2_t uv;
 	rgba_t color;
 	vec3_t pos;
 } vertex_t;
 
-typedef struct {
+typedef struct __attribute__((packed, aligned(4))) {
 	vertex_t vertices[3];
 } tris_t;
 
