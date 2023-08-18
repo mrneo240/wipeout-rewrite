@@ -176,7 +176,7 @@ void texman_upload_swizzle(Texman_State *state, int width, int height, unsigned 
     struct PSP_Texture *current = texman_reserve_memory(state, width, height, type);
     sceKernelDcacheWritebackRange(buffer, getMemorySize(width, height, type));
     current->width = width;
-    current->height = height;
+    current->height = upper_power_of_two(height);
     current->type = type;
     /* 32bpp = 4 bytes, width is in bytes */
     swizzle_fast(current->location, buffer, getTexWidthBytes(width, type), height);
@@ -194,7 +194,7 @@ void texman_upload(Texman_State *state, int width, int height, unsigned int type
     const unsigned int tex_size = getMemorySize(width, height, type);
     sceKernelDcacheWritebackRange(buffer, tex_size);
     current->width = width;
-    current->height = height;
+    current->height = upper_power_of_two(height);
     current->type = type;
     current->swizzled = GU_FALSE;
     memcpy(current->location, buffer, tex_size);

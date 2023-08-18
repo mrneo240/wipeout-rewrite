@@ -64,7 +64,7 @@ Texman_State vramTexman;
 
 // PSP Render setup
 static unsigned int staticOffset = 0;
-static unsigned int __attribute__((aligned(64))) list[262144 * 2];
+static unsigned int __attribute__((aligned(64))) list[(256+64) * 1024 * 2];
 
 static unsigned int getMemorySize(unsigned int width, unsigned int height, unsigned int psm)
 {
@@ -138,28 +138,28 @@ void render_init(vec2i_t size)
 	sceGuEnable(GU_CLIP_PLANES);
 	sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
 	sceGuDisable(GU_LIGHTING);
-	sceGuDisable(GU_BLEND);
+	sceGuEnable(GU_BLEND);
 	sceGuDisable(GU_CULL_FACE);
 	sceGuFrontFace(GU_CCW);
 	sceGuDepthMask(GU_FALSE);
 	sceGuTexEnvColor(0xffffffff);
 	sceGuTexOffset(0.0f, 0.0f);
 	sceGuTexWrap(GU_CLAMP, GU_CLAMP);
+	sceGuAlphaFunc(GU_GREATER, 0, 0xff);
 
 	sceGuFinish();
 	sceGuSync(0, 0);
 	sceDisplayWaitVblankStart();
 	sceGuDisplay(GU_TRUE);
 
-	uint32_t buffer_size = 9 * 1024 * 1024;
+	uint32_t buffer_size = 10 * 1024 * 1024;
 	void *texman_buffer = malloc(buffer_size); // getStaticVramBufferBytes(buffer_size);
 	void *texman_aligned = (void *)((((unsigned int)texman_buffer + TEX_ALIGNMENT - 1) / TEX_ALIGNMENT) * TEX_ALIGNMENT);
 	texman_reset(&vramTexman, texman_aligned, buffer_size);
 	if (!texman_buffer)
 	{
-		char msg[32];
-		sprintf(msg, "OUT OF MEMORY!\n");
-		sceIoWrite(1, msg, strlen(msg));
+		fprintf(2,"OUT OF MEMORY!\n");
+		fflush(2);
 
 		sceKernelExitGame();
 	}
@@ -367,7 +367,7 @@ void render_set_depth_offset(float offset)
 		return;
 	}
 
-	sceGuDepthOffset(0); /* I think we need a little more on psp because of 16bit depth buffer */
+	sceGuDepthOffset((unsigned int)offset); /* I think we need a little more on psp because of 16bit depth buffer */
 }
 
 void render_set_screen_position(vec2_t pos)
@@ -550,24 +550,6 @@ void render_push_2d_tile(vec2i_t pos, vec2i_t uv_offset, vec2i_t uv_size, vec2i_
 									 texture_index);
 }
 
-static inline int ispow2(uint32_t x)
-{
-	return (x & (x - 1)) == 0;
-}
-static uint32_t upper_power_of_two(uint32_t v)
-{
-	v--;
-	v |= v >> 1;
-	v |= v >> 2;
-	v |= v >> 4;
-	v |= v >> 8;
-	v |= v >> 16;
-	v |= v >> 32;
-	v |= v >> 64;
-	v++;
-	return v;
-}
-
 uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels)
 {
 	error_if(textures_len >= TEXTURES_MAX, "TEXTURES_MAX reached");
@@ -575,6 +557,10 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels)
 	uint32_t tex_width = tw;
 	uint32_t tex_height = th;
 	uint32_t texId = 0xffff;
+
+	if( tw < 4 || th < 4){
+		return RENDER_NO_TEXTURE;
+	}
 
 	if (ispow2(tex_width) && ispow2(tex_height))
 	{
@@ -585,28 +571,28 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels)
 		}
 
 		texId = texman_create(&vramTexman);
-		texman_upload(&vramTexman, tex_width, tex_height, GU_PSM_8888, pixels);
+		texman_upload_swizzle(&vramTexman, tex_width, tex_height, GU_PSM_8888, pixels);
 	}
 	else
 	{
 		tex_width = upper_power_of_two(tw);
 		tex_height = upper_power_of_two(th);
-		if (!texman_space_available(&vramTexman, tex_width * tex_height * 4))
+		if (!texman_space_available(&vramTexman, tex_width * th * 4))
 		{
 			printf("EMPTYING TEXTURE CACHE!\n");
 			texman_clear(&vramTexman);
 		}
 		texId = texman_create(&vramTexman);
-		pb = mem_temp_alloc(sizeof(rgba_t) * tex_width * tex_height);
-		memset(pb, 0, sizeof(rgba_t) * tex_width * tex_height);
+		pb = mem_temp_alloc(sizeof(rgba_t) * tex_width * th);
+		memset(pb, 0, sizeof(rgba_t) * tex_width * th);
 
 		// Texture
 		for (int32_t y = 0; y < th; y++)
 		{
 			memcpy(pb + tex_width * y, pixels + tw * y, tw * sizeof(rgba_t));
 		}
-		printf("padding texture (%d x %d) -> (%d x %d)\n", tw, th, tex_width, tex_height);
-		texman_upload(&vramTexman, tex_width, tex_height, GU_PSM_8888, (void *)pb);
+		printf("padding texture (%d x %d) -> (%d x %d)\n", tw, th, tex_width, th);
+		texman_upload_swizzle(&vramTexman, tex_width, th, GU_PSM_8888, (void *)pb);
 	}
 
 	sceGuTexFilter(GU_NEAREST, GU_LINEAR);
