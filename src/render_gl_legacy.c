@@ -509,6 +509,10 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels) {
 	uint32_t tex_width = tw;
 	uint32_t tex_height = th;
 
+	if(tw < 2 || th < 2){
+		return 0;
+	}
+
 	// Dreamcast, or other platform that requires pow2 textures
 #if defined(_arch_dreamcast)
 	if(tw < 8 || th < 8){

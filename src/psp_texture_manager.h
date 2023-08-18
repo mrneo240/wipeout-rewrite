@@ -51,3 +51,22 @@ void texman_upload_swizzle(Texman_State *state, int width, int height, unsigned 
 void texman_upload(Texman_State *state, int width, int height, unsigned int type, const void *buffer);
 void texman_store(Texman_State *state, int width, int height, unsigned int type, const void *buffer);
 void texman_bind_tex(Texman_State *state, unsigned int num);
+
+static inline int ispow2(int x)
+{
+	return (x & (x - 1)) == 0;
+}
+
+static inline unsigned int upper_power_of_two(unsigned int v)
+{
+	v--;
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v |= v >> 8;
+	v |= v >> 16;
+	v |= v >> 32;
+	v |= v >> 64;
+	v++;
+	return v;
+}

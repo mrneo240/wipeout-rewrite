@@ -166,7 +166,6 @@ void platform_pump_events() {
 		input_set_button_state(INPUT_GAMEPAD_DPAD_RIGHT, btnRight);
 
 		// joystick
-		/*
 		if (stick_x < 0) {
 			input_set_button_state(INPUT_GAMEPAD_L_STICK_LEFT, 0.0);
 			input_set_button_state(INPUT_GAMEPAD_L_STICK_LEFT+1, stick_x);
@@ -182,7 +181,7 @@ void platform_pump_events() {
 		else {
 			input_set_button_state(INPUT_GAMEPAD_L_STICK_UP, -stick_y);
 			input_set_button_state(INPUT_GAMEPAD_L_STICK_UP+1, 0.0);
-		}*/
+		}
 }
 
 
@@ -207,11 +206,7 @@ float Sys_FloatTime(void) {
   return (tp.tv_sec - secbase) + tp.tv_usec * divisor;
 }
 
-
-//static float cur_time = 5.0f;
 scalar_t platform_now() {
-	//cur_time += (1.0f/60.0f);
-	//return (scalar_t)cur_time;
 	return (scalar_t)Sys_FloatTime();
 }
 

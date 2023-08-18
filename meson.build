@@ -67,7 +67,7 @@ elif opt_platform == 'psp'
   opt_renderer = 'gu'
   arg_linker += [ '-Wl,--end-group', '-lpspgu', '-lpspvfpu', '-lpspctrl', '-lpspge', '-lpspdisplay', '-lm', '-lpspsdk', '-lpsprtc', '-lpspaudio', '-lpsppower', '-Wl,--start-group', '-lc' ]
 
-  pspsdk_dep = declare_dependency(link_args :  [],
+  pspsdk_dep = declare_dependency(link_args :  ['-g3', '-Wl,-Map=output.map'],
                                 include_directories : ['/usr/local/pspdev/psp/sdk/include'] )
 
   libpspvram_proj = subproject('libpspvram')
