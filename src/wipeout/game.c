@@ -564,8 +564,6 @@ void game_init() {
 
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_GAMEPAD_A, A_MENU_SELECT);
 	input_bind(INPUT_LAYER_SYSTEM, INPUT_GAMEPAD_START, A_MENU_START);
-	
-
 
 
 	// User defined, loaded from the save struct
