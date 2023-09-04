@@ -251,7 +251,7 @@ void weapon_follow_target(weapon_t *self) {
 	vec3_t angular_velocity = vec3(0, 0, 0);
 	if (self->target) {
 		vec3_t dir = vec3_mulf(vec3_sub(self->target->position, self->position), 0.125 * 30 * system_tick());
-		float height = sqrt(dir.x * dir.x + dir.z * dir.z);
+		float height = platform_sqrt(dir.x * dir.x + dir.z * dir.z);
 		angular_velocity.y = -atan2(dir.x, dir.z) - self->angle.y;
 		angular_velocity.x = -atan2(dir.y, height) - self->angle.x;
 	}
@@ -260,9 +260,9 @@ void weapon_follow_target(weapon_t *self) {
 	self->angle = vec3_add(self->angle, vec3_mulf(angular_velocity, 30 * system_tick() * 0.25));
 	self->angle = vec3_wrap_angle(self->angle);
 
-	self->acceleration.x = -sin(self->angle.y) * cos(self->angle.x) * 256;
-	self->acceleration.y = -sin(self->angle.x) * 256;
-	self->acceleration.z = cos(self->angle.y) * cos(self->angle.x) * 256;
+	self->acceleration.x = -platform_sin(self->angle.y) * platform_cos(self->angle.x) * 256;
+	self->acceleration.y = -platform_sin(self->angle.x) * 256;
+	self->acceleration.z = platform_cos(self->angle.y) * platform_cos(self->angle.x) * 256;
 }
 
 ship_t *weapon_collides_with_ship(weapon_t *self) {
@@ -349,7 +349,7 @@ void weapon_update_mine_wait_for_release(weapon_t *self) {
 void weapon_update_mine_lights(weapon_t *self, int index) {
 	Prm prm = {.primitive = self->model->primitives};
 
-	uint8_t r = sin(system_cycle_time() * M_PI * 2 + index * 0.66) * 128 + 128;
+	uint8_t r = platform_sin(system_cycle_time() * M_PI * 2 + index * 0.66) * 128 + 128;
 	for (int i = 0; i < 8; i++) {
 		switch (prm.primitive->type) {
 		case PRM_TYPE_GT3:
@@ -581,9 +581,9 @@ void weapon_update_shield(weapon_t *self) {
 		case PRM_TYPE_G3 :
 			coords = poly.g3->coords;
 
-			col0 = sin(color_timer * coords[0]) * 127 + 128;
-			col1 = sin(color_timer * coords[1]) * 127 + 128;
-			col2 = sin(color_timer * coords[2]) * 127 + 128;
+			col0 = platform_sin(color_timer * coords[0]) * 127 + 128;
+			col1 = platform_sin(color_timer * coords[1]) * 127 + 128;
+			col2 = platform_sin(color_timer * coords[2]) * 127 + 128;
 
 			poly.g3->colour[0].as_rgba.r = col0;
 			poly.g3->colour[0].as_rgba.g = col0;
@@ -605,10 +605,10 @@ void weapon_update_shield(weapon_t *self) {
 		case PRM_TYPE_G4 :
 			coords = poly.g4->coords;
 
-			col0 = sin(color_timer * coords[0]) * 127 + 128;
-			col1 = sin(color_timer * coords[1]) * 127 + 128;
-			col2 = sin(color_timer * coords[2]) * 127 + 128;
-			col3 = sin(color_timer * coords[3]) * 127 + 128;
+			col0 = platform_sin(color_timer * coords[0]) * 127 + 128;
+			col1 = platform_sin(color_timer * coords[1]) * 127 + 128;
+			col2 = platform_sin(color_timer * coords[2]) * 127 + 128;
+			col3 = platform_sin(color_timer * coords[3]) * 127 + 128;
 
 			poly.g4->colour[0].as_rgba.r = col0;
 			poly.g4->colour[0].as_rgba.g = col0;

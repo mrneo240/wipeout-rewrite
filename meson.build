@@ -20,6 +20,8 @@ opt_renderer = get_option('renderer')
 # Determine Platform
 platform_dep = []
 opt_platform = get_option('platform')
+src_platform_types = ['src/types.c']
+
 if opt_platform == 'sdl'
   sdl2_dep = dependency('sdl2', fallback : ['sdl2', 'sdl2_dep'], native: false, default_options : ['default_library=static', 'buildtype=debugoptimized'])
   platform_dep += [sdl2_dep]
@@ -75,6 +77,7 @@ elif opt_platform == 'psp'
 
   platform_dep += [pspsdk_dep, libpspvram_dep]
   src_platform += ['src/platform_psp.c', 'src/psp_audio_stack.c']
+  src_platform_types = ['src/types.c']
 
 elif opt_platform == 'dc'
   arg_code += ['-DPLATFORM_DC', '-DNDEBUG']
@@ -82,11 +85,14 @@ elif opt_platform == 'dc'
   arg_base += ['-mpretend-cmove','-fsingle-precision-constant', '-ffast-math', '-O3', '-g0' ]
   opt_renderer = 'gl_legacy'
 
+  dc_debug_dep = declare_dependency(link_args :  ['-g3', '-Wl,-Map=output.map'])
+
   libgldc_proj = subproject('libgl')
   libgldc_dep = libgldc_proj.get_variable('libgldc_dep')
-  platform_dep += [libgldc_dep]
+  platform_dep += [libgldc_dep, dc_debug_dep]
 
   src_platform += ['src/platform_dc.c']
+  src_platform_types = ['src/types.c']
 else
   error('No platform chosen!')
 endif
@@ -121,10 +127,10 @@ arg_c = [ arg_base, arg_code ]
 inc_base = include_directories('src', 'src/libs', 'src/wipeout')
 
 src_wipeout = ['src/wipeout/camera.c','src/wipeout/droid.c','src/wipeout/game.c','src/wipeout/hud.c','src/wipeout/image.c','src/wipeout/ingame_menus.c','src/wipeout/intro.c','src/wipeout/main_menu.c','src/wipeout/menu.c','src/wipeout/object.c','src/wipeout/particle.c','src/wipeout/race.c','src/wipeout/scene.c','src/wipeout/sfx.c','src/wipeout/ship_ai.c','src/wipeout/ship.c','src/wipeout/ship_player.c','src/wipeout/title.c','src/wipeout/track.c','src/wipeout/ui.c','src/wipeout/weapon.c']
-src_pc = ['src/input.c','src/mem.c','src/system.c','src/types.c','src/utils.c']
+src_pc = ['src/input.c','src/mem.c','src/system.c','src/utils.c']
 
 src = [ src_wipeout ]
-src_port = [ src_pc, src_platform, src_renderer ]
+src_port = [ src_pc, src_platform, src_platform_types, src_renderer ]
 inc = [ inc_base, platform_inc ]
 
 # wipeout-rewrite binary

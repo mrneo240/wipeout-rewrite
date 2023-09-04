@@ -211,6 +211,22 @@ void platform_set_audio_mix_cb(void (*cb)(float *buffer, uint32_t len)) {
 
 
 #if defined(RENDERER_GL) || defined(RENDERER_GL_LEGACY)
+
+#define TICK_INTERVAL    30
+
+static uint32_t next_time;
+
+uint32_t time_left(void)
+{
+	uint32_t now;
+
+	now = SDL_GetTicks();
+	if(next_time <= now) {
+		return 0;
+	}
+	return next_time - now;
+}
+
 	#define PLATFORM_WINDOW_FLAGS SDL_WINDOW_OPENGL
 	SDL_GLContext platform_gl;
 
@@ -235,6 +251,10 @@ void platform_set_audio_mix_cb(void (*cb)(float *buffer, uint32_t len)) {
 
 	void platform_end_frame() {
 		SDL_GL_SwapWindow(window);
+
+    next_time = SDL_GetTicks() + TICK_INTERVAL;
+		SDL_Delay(time_left());
+		next_time += TICK_INTERVAL;
 	}
 
 	vec2i_t platform_screen_size() {

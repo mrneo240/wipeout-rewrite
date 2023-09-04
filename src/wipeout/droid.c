@@ -48,9 +48,9 @@ void droid_draw(droid_t *droid) {
 	droid->cycle_timer += system_tick() * M_PI * 2;
 
 	Prm prm = {.primitive = droid_model->primitives};
-	int rf = sin(droid->cycle_timer) * 127 + 128;
-	int gf = sin(droid->cycle_timer + 0.2) * 127 + 128;
-	int bf = sin(droid->cycle_timer * 0.5 + 0.1) * 127 + 128;
+	int rf = platform_sin(droid->cycle_timer) * 127 + 128;
+	int gf = platform_sin(droid->cycle_timer + 0.2) * 127 + 128;
+	int bf = platform_sin(droid->cycle_timer * 0.5 + 0.1) * 127 + 128;
 
 	int r, g, b;
 
@@ -131,16 +131,16 @@ void droid_update_intro(droid_t *droid, ship_t *ship) {
 	droid->update_timer -= system_tick();
 
 	if (droid->update_timer < DROID_UPDATE_TIME_INTRO_3) {
-		droid->acceleration.x = (-sin(droid->angle.y) * cos(droid->angle.x)) * 0.25 * 4096.0;
+		droid->acceleration.x = (-platform_sin(droid->angle.y) * platform_cos(droid->angle.x)) * 0.25 * 4096.0;
 		droid->acceleration.y = 0;
-		droid->acceleration.z = (cos(droid->angle.y) * cos(droid->angle.x)) * 0.25 * 4096.0;
+		droid->acceleration.z = (platform_cos(droid->angle.y) * platform_cos(droid->angle.x)) * 0.25 * 4096.0;
 		droid->angular_velocity.y = 0;
 	}
 
 	else if (droid->update_timer < DROID_UPDATE_TIME_INTRO_2) {
-		droid->acceleration.x = (-sin(droid->angle.y) * cos(droid->angle.x)) * 0.125 * 4096.0;
+		droid->acceleration.x = (-platform_sin(droid->angle.y) * platform_cos(droid->angle.x)) * 0.125 * 4096.0;
 		droid->acceleration.y = -140;
-		droid->acceleration.z = (cos(droid->angle.y) * cos(droid->angle.x)) * 0.125 * 4096.0;
+		droid->acceleration.z = (platform_cos(droid->angle.y) * platform_cos(droid->angle.x)) * 0.125 * 4096.0;
 		droid->angular_velocity.y = (-8.0 / 4096.0) * M_PI * 2 * 30;
 	}
 
@@ -186,9 +186,9 @@ void droid_update_idle(droid_t *droid, ship_t *ship) {
 		droid->angular_velocity.y = quickest_turn * 30.0 / 64.0;
 	}
 
-	droid->acceleration.x = (-sin(droid->angle.y) * cos(droid->angle.x)) * 0.125 * 4096;
+	droid->acceleration.x = (-platform_sin(droid->angle.y) * platform_cos(droid->angle.x)) * 0.125 * 4096;
 	droid->acceleration.y = target_vector.y / 64.0;
-	droid->acceleration.z = (cos(droid->angle.y) * cos(droid->angle.x)) * 0.125 * 4096;
+	droid->acceleration.z = (platform_cos(droid->angle.y) * platform_cos(droid->angle.x)) * 0.125 * 4096;
 
 	if (flags_is(ship->flags, SHIP_IN_RESCUE)) {
 		flags_add(droid->sfx_tractor->flags, SFX_PLAY);

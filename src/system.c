@@ -36,6 +36,16 @@ void system_update() {
 	tick_last = min(real_delta, 0.1) * time_scale;
 	time_scaled += tick_last;
 
+#if 0
+	uint32_t a = 0;
+	uint32_t b = SDL_GetTicks();
+	uint32_t delta = 0;
+	while (delta < 1000.0/15.0) {
+		a = SDL_GetTicks();
+    delta = a - b;
+		SDL_Delay(1);
+	}
+#endif
 	// FIXME: come up with a better way to wrap the cycle_time, so that it
 	// doesn't lose precission, but also doesn't jump upon reset.
 	cycle_time = time_scaled;

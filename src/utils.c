@@ -14,8 +14,27 @@ char *get_path(const char *dir, const char *file) {
 
 
 bool file_exists(char *path) {
+	#if defined(_arch_dreamcast)
+	char _path[256];
+	memset(_path, 0, sizeof(path));
+	strcpy(_path, "/cd/");
+	strcat(_path, path);
+
+	struct stat s;
+	int f = (stat(_path, &s) == 0);
+	if(!f){
+		// if not on cd, try /pc/
+		memset(_path, 0, sizeof(path));
+		strcpy(_path, "/pc/");
+		strcat(_path, path);
+		struct stat s;
+		f = (stat(_path, &s) == 0);
+	}
+	return f;
+#else
 	struct stat s;
 	return (stat(path, &s) == 0);
+	#endif
 }
 
 uint8_t *file_load(char *path, uint32_t *bytes_read) {
@@ -25,6 +44,13 @@ uint8_t *file_load(char *path, uint32_t *bytes_read) {
 	strcpy(_path, "/cd/");
 	strcat(_path, path);
 	FILE *f = fopen(_path, "rb");
+	if(!f){
+		// if not on cd, try /pc/
+		memset(_path, 0, sizeof(path));
+		strcpy(_path, "/pc/");
+		strcat(_path, path);
+		f = fopen(_path, "rb");
+	}
 #else
 	FILE *f = fopen(path, "rb");
 #endif

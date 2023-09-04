@@ -295,9 +295,9 @@ void track_cycle_pickups() {
 		else if (g.track.pickups[i].cooldown_timer <= 0) {
 			flags_add(g.track.pickups[i].face->flags, FACE_PICKUP_ACTIVE);
 			track_face_set_color(g.track.pickups[i].face, rgba(
-				sin( pickup_cycle_time + i) * 127 + 128,
-				cos( pickup_cycle_time + i) * 127 + 128,
-				sin(-pickup_cycle_time - i) * 127 + 128,
+				platform_sin( pickup_cycle_time + i) * 127 + 128,
+				platform_cos( pickup_cycle_time + i) * 127 + 128,
+				platform_sin(-pickup_cycle_time - i) * 127 + 128,
 				255
 			));
 		}

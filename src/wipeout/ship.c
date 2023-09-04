@@ -433,12 +433,12 @@ void ship_draw_shadow(ship_t *self) {
 void ship_update(ship_t *self) {
 
 	// Set Unit vectors of this ship
-	float sx = sin(self->angle.x);
-	float cx = cos(self->angle.x);
-	float sy = sin(self->angle.y);
-	float cy = cos(self->angle.y);
-	float sz = sin(self->angle.z);
-	float cz = cos(self->angle.z);
+	float sx = platform_sin(self->angle.x);
+	float cx = platform_cos(self->angle.x);
+	float sy = platform_sin(self->angle.y);
+	float cy = platform_cos(self->angle.y);
+	float sz = platform_sin(self->angle.z);
+	float cz = platform_cos(self->angle.z);
 
 	self->dir_forward.x = -(sy * cx);
 	self->dir_forward.y = - sx;

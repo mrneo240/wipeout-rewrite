@@ -7,10 +7,12 @@ vec3_t vec3_wrap_angle(vec3_t a) {
 }
 
 float vec3_angle(vec3_t a, vec3_t b) {
-	float magnitude = sqrt(
-		(a.x * a.x + a.y * a.y + a.z * a.z) * 
-		(b.x * b.x + b.y * b.y + b.z * b.z)
-	);
+	float squared  = (a.x * a.x + a.y * a.y + a.z * a.z) * 
+		(b.x * b.x + b.y * b.y + b.z * b.z);
+	float magnitude = 0;
+	if(squared != 0){
+		float magnitude = platform_sqrt(squared);
+	}
 	float cosine = (magnitude == 0)
 		? 1
 		: vec3_dot(a, b) / magnitude;
@@ -52,12 +54,12 @@ void mat4_set_translation(mat4_t *mat, vec3_t pos) {
 }
 
 void mat4_set_yaw_pitch_roll(mat4_t *mat, vec3_t rot) {
-	float sx = sin( rot.x);
-	float sy = sin(-rot.y);
-	float sz = sin(-rot.z);
-	float cx = cos( rot.x);
-	float cy = cos(-rot.y);
-	float cz = cos(-rot.z);
+	float sx = platform_sin( rot.x);
+	float sy = platform_sin(-rot.y);
+	float sz = platform_sin(-rot.z);
+	float cx = platform_cos( rot.x);
+	float cy = platform_cos(-rot.y);
+	float cz = platform_cos(-rot.z);
 
 	mat->cols[0][0] = cy * cz + sx * sy * sz;
 	mat->cols[1][0] = cz * sx * sy - cy * sz;
@@ -71,12 +73,12 @@ void mat4_set_yaw_pitch_roll(mat4_t *mat, vec3_t rot) {
 }
 
 void mat4_set_roll_pitch_yaw(mat4_t *mat, vec3_t rot) {
-	float sx = sin( rot.x);
-	float sy = sin(-rot.y);
-	float sz = sin(-rot.z);
-	float cx = cos( rot.x);
-	float cy = cos(-rot.y);
-	float cz = cos(-rot.z);
+	float sx = platform_sin( rot.x);
+	float sy = platform_sin(-rot.y);
+	float sz = platform_sin(-rot.z);
+	float cx = platform_cos( rot.x);
+	float cy = platform_cos(-rot.y);
+	float cz = platform_cos(-rot.z);
 
 	mat->cols[0][0] = cy * cz - sx * sy * sz;
 	mat->cols[1][0] = -cx * sz;
@@ -113,4 +115,10 @@ void mat4_mul(mat4_t *res, mat4_t *a, mat4_t *b) {
 	res->m[13] = b->m[12] * a->m[1] + b->m[13] * a->m[5] + b->m[14] * a->m[ 9] + b->m[15] * a->m[13];
 	res->m[14] = b->m[12] * a->m[2] + b->m[13] * a->m[6] + b->m[14] * a->m[10] + b->m[15] * a->m[14];
 	res->m[15] = b->m[12] * a->m[3] + b->m[13] * a->m[7] + b->m[14] * a->m[11] + b->m[15] * a->m[15];
+}
+
+void platform_sincos(float r, float *s, float *c)
+{
+	*s = platform_sin(r);
+	*c = platform_cos(r);
 }

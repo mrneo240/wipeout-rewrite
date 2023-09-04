@@ -63,11 +63,11 @@ static vec2i_t screen_size;
 
 static render_blend_mode_t blend_mode = RENDER_BLEND_NORMAL;
 
-static mat4_t projection_mat_2d = mat4_identity();
-static mat4_t projection_mat_3d = mat4_identity();
-static mat4_t sprite_mat = mat4_identity();
-static mat4_t view_mat = mat4_identity();
-static mat4_t model_mat = mat4_identity();
+static mat4_t __attribute__((aligned(32))) projection_mat_2d = mat4_identity();
+static mat4_t __attribute__((aligned(32))) projection_mat_3d = mat4_identity();
+static mat4_t __attribute__((aligned(32))) sprite_mat = mat4_identity();
+static mat4_t __attribute__((aligned(32))) view_mat = mat4_identity();
+static mat4_t __attribute__((aligned(32))) model_mat = mat4_identity();
 
 static render_texture_t textures[TEXTURES_MAX];
 static uint32_t textures_len = 0;
