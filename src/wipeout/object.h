@@ -326,7 +326,6 @@ typedef struct InfiniteLight {
 #define PRM_TYPE_POINT_LIGHT       22
 #define PRM_TYPE_SPOT_LIGHT        23
 
-
 typedef struct Object {
 	char name[16];
 
@@ -344,6 +343,12 @@ typedef struct Object {
 	int32_t extent; // Flags for object characteristics
 	int16_t flags; // Next object in list
 	struct Object *next; // Next object in list
+
+	// Precomputed, sorted by texture list of verts
+	bool is_chunked;
+	int16_t chunks_len; //Number of chunks
+	ObjectVertexChunk *chunks; // The actual sorted chunks of verts
+	void *base_chunk_ptr; // Should we keep this around?
 } Object;
 
 typedef union Prm {

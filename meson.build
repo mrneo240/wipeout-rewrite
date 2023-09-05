@@ -52,6 +52,7 @@ if opt_platform == 'sdl'
   endif
 
   arg_code += ['-DPLATFORM_SDL', args_sdl]
+  arg_base += ['-DNO_INTRO']
 elif opt_platform == 'sokol'
   src_platform += ['src/platform_sokol.c']
 

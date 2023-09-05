@@ -58,6 +58,17 @@ typedef union {
 	#error "No vertex format found!"
 #endif
 
+typedef struct {
+	tris_t tri;
+	int16_t texture_id;
+} tris_texid_t;
+
+typedef struct ObjectVertexChunk {
+	int16_t texture_id;
+	int16_t tris_len;
+	tris_t *tris;
+} ObjectVertexChunk;
+
 #define rgba(R, G, B, A) ((rgba_t){.as_rgba = {.r = R, .g = G, .b = B, .a = A}})
 #define vec2(X, Y) ((vec2_t){.x = X, .y = Y})
 #define vec3(X, Y, Z) ((vec3_t){.x = X, .y = Y, .z = Z})
