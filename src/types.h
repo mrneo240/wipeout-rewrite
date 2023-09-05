@@ -28,4 +28,15 @@
 	typedef double scalar_t;
 #endif
 
+typedef struct {
+	tris_t tri;
+	int16_t texture_id;
+} tris_texid_t;
+
+typedef struct ObjectVertexChunk {
+	int16_t texture_id;
+	int16_t tris_len;
+	tris_t *tris;
+} ObjectVertexChunk;
+
 #endif

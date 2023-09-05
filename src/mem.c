@@ -41,12 +41,12 @@ void mem_reset(void *p) {
 // Temp allocator - returns bytes from the back of the hunk
 
 // Temporary allocated bytes are not allowed to persist for multiple frames. You
-// need to explicitly free them when you are done. Temp allocated bytes don't 
-// have be freed in reverse allocation order. I.e. you can allocate A then B, 
+// need to explicitly free them when you are done. Temp allocated bytes don't
+// have be freed in reverse allocation order. I.e. you can allocate A then B,
 // and aftewards free A then B.
 
 void *mem_temp_alloc(uint32_t size) {
-	size = ((size >> 3) + 7) << 3; // allign to 8 bytes
+	size = ((size >> 3) + 7) << 3; // align to 8 bytes
 
 	error_if(bump_len + temp_len + size >= MEM_HUNK_BYTES, "Failed to allocate %d bytes in temp mem", size);
 	error_if(temp_objects_len >= MEM_TEMP_OBJECTS_MAX, "MEM_TEMP_OBJECTS_MAX reached");

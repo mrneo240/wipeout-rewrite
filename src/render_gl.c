@@ -809,6 +809,61 @@ void render_push_sprite(vec3_t pos, vec2i_t size, rgba_t color, uint16_t texture
 	}, texture_index);
 }
 
+void render_buffer_sprite(vec3_t pos, vec2i_t size, rgba_t color, uint16_t texture_index, tris_texid_t *buffer_out) {
+	error_if(texture_index >= textures_len, "Invalid texture %d", texture_index);
+
+	vec3_t p1 = vec3_add(pos, vec3_transform(vec3(-size.x * 0.5, -size.y * 0.5, 0), &sprite_mat));
+	vec3_t p2 = vec3_add(pos, vec3_transform(vec3( size.x * 0.5, -size.y * 0.5, 0), &sprite_mat));
+	vec3_t p3 = vec3_add(pos, vec3_transform(vec3(-size.x * 0.5,  size.y * 0.5, 0), &sprite_mat));
+	vec3_t p4 = vec3_add(pos, vec3_transform(vec3( size.x * 0.5,  size.y * 0.5, 0), &sprite_mat));
+
+	render_texture_t *t = &textures[texture_index];
+	tris_texid_t *tri1 = (buffer_out+0);
+	tris_texid_t *tri2 = (buffer_out+1);
+
+	(*tri1).tri = (tris_t){
+		.vertices = {
+			{
+				.pos = p1,
+				.uv = {0, 0},
+				.color = color
+			},
+			{
+				.pos = p2,
+				.uv = {0 + t->size.x ,0},
+				.color = color
+			},
+			{
+				.pos = p3,
+				.uv = {0, 0 + t->size.y},
+				.color = color
+			},
+		}
+	};
+	(*tri2).tri = (tris_t){
+		.vertices = {
+			{
+				.pos = p3,
+				.uv = {0, 0 + t->size.y},
+				.color = color
+			},
+			{
+				.pos = p2,
+				.uv = {0 + t->size.x, 0},
+				.color = color
+			},
+			{
+				.pos = p4,
+				.uv = {0 + t->size.x, 0 + t->size.y},
+				.color = color
+			},
+		}
+	};
+
+	(*tri1).texture_id = texture_index;
+	(*tri2).texture_id = texture_index;
+}
+
 void render_push_2d(vec2i_t pos, vec2i_t size, rgba_t color, uint16_t texture_index) {
 	render_push_2d_tile(pos, vec2i(0, 0), render_texture_size(texture_index), size, color, texture_index);
 }
