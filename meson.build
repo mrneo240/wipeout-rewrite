@@ -54,7 +54,7 @@ if opt_platform == 'sdl'
   endif
 
   arg_code += ['-DPLATFORM_SDL', args_sdl]
-  arg_base += ['-DNO_INTRO']
+  arg_base += ['-DNO_INTRO', '-DHAS_WARNING']
 elif opt_platform == 'sokol'
   src_platform += ['src/platform_sokol.c']
 
@@ -66,7 +66,7 @@ elif opt_platform == 'sokol'
   arg_code += ['-DPLATFORM_SOKOL']
 elif opt_platform == 'psp'
   arg_code += ['-DPLATFORM_PSP']
-  arg_base += ['-DNO_INTRO']
+  arg_base += ['-DNO_INTRO', '-DHAS_WARNING', '-Og']
   opt_renderer = 'gu'
   arg_linker += [ '-Wl,--end-group', '-lpspgu', '-lpspvfpu', '-lpspctrl', '-lpspge', '-lpspdisplay', '-lm', '-lpspsdk', '-lpsprtc', '-lpspaudio', '-lpsppower', '-Wl,--start-group', '-lc' ]
 
@@ -82,16 +82,22 @@ elif opt_platform == 'psp'
 
 elif opt_platform == 'dc'
   arg_code += ['-DPLATFORM_DC', '-DNDEBUG']
-  arg_base += ['-DNO_INTRO']
-  arg_base += ['-mpretend-cmove','-fsingle-precision-constant', '-ffast-math', '-O3', '-g0' ]
+  arg_base += ['-DNO_INTRO', '-DHAS_WARNING']
+  arg_base += ['-mpretend-cmove','-fsingle-precision-constant', '-ffast-math', '-Og', '-g3' ]
   opt_renderer = 'gl_legacy'
 
   dc_debug_dep = declare_dependency(link_args :  ['-g3', '-Wl,-Map=output.map'])
 
   #custom unknown libgl (from nuquake?)
-  libgldc_proj = subproject('libgl')
+#  libgldc_proj = subproject('libgl')
   # upstream latest GLdc, currently BROKEN
 #  libgldc_proj = subproject('gldc_upstream')
+  # upstream latest GLdc Prebuilt from Gitlab, currently BROKEN due to mismatch gcc ver
+#  libgldc_proj = subproject('gldc_upstream_prebuilt')
+
+  # gldc found in nuquake, unknown provenance
+  libgldc_proj = subproject('libgl_unknown')
+
   libgldc_dep = libgldc_proj.get_variable('libgldc_dep')
   platform_dep += [libgldc_dep, dc_debug_dep]
 
@@ -111,7 +117,6 @@ if opt_renderer == 'gl'
   render_dep += [glew_dep]
 elif opt_renderer == 'gl_legacy'
   arg_base += ['-DRENDERER_GL_LEGACY']
-  #arg_base += ['-DNO_INTRO']
   src_renderer += ['src/render_gl_legacy.c']
   if opt_platform == 'sokol' or opt_platform == 'sdl'
     glew_dep = dependency('glew')
@@ -119,7 +124,6 @@ elif opt_renderer == 'gl_legacy'
   endif
 elif opt_renderer == 'gu'
   arg_base += ['-DRENDERER_GU']
-  #arg_base += ['-DNO_INTRO']
   src_renderer += ['src/render_gu.c', 'src/psp_texture_manager.c']
 else
   error('No renderer chosen!')
@@ -131,7 +135,7 @@ arg_c = [ arg_base, arg_code ]
 
 inc_base = include_directories('src', 'src/libs', 'src/wipeout')
 
-src_wipeout = ['src/wipeout/camera.c','src/wipeout/droid.c','src/wipeout/game.c','src/wipeout/hud.c','src/wipeout/image.c','src/wipeout/ingame_menus.c','src/wipeout/intro.c','src/wipeout/main_menu.c','src/wipeout/menu.c','src/wipeout/object.c','src/wipeout/particle.c','src/wipeout/race.c','src/wipeout/scene.c','src/wipeout/sfx.c','src/wipeout/ship_ai.c','src/wipeout/ship.c','src/wipeout/ship_player.c','src/wipeout/title.c','src/wipeout/track.c','src/wipeout/ui.c','src/wipeout/weapon.c']
+src_wipeout = ['src/wipeout/camera.c','src/wipeout/droid.c','src/wipeout/game.c','src/wipeout/hud.c','src/wipeout/image.c','src/wipeout/ingame_menus.c','src/wipeout/intro.c','src/wipeout/main_menu.c','src/wipeout/menu.c','src/wipeout/object.c','src/wipeout/particle.c','src/wipeout/race.c','src/wipeout/scene.c','src/wipeout/sfx.c','src/wipeout/ship_ai.c','src/wipeout/ship.c','src/wipeout/ship_player.c','src/wipeout/title.c','src/wipeout/warning.c','src/wipeout/track.c','src/wipeout/ui.c','src/wipeout/weapon.c']
 src_pc = ['src/input.c','src/mem.c','src/system.c','src/utils.c']
 
 src = [ src_wipeout ]
