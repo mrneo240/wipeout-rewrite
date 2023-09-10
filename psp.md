@@ -7,3 +7,5 @@ psp-docker mksfo  'wipeout-rewrite' PARAM.SFO
 psp-docker pack-pbp EBOOT.PBP PARAM.SFO NULL NULL NULL NULL NULL wipeout-rewrite.prx NULL
 
 http://ppsspp-debugger.unknownbrackets.org/cpu
+
+ninja -C dc_builddir/ -t compdb -x c_COMPILER cpp_COMPILER > dc_builddir/compile_commands.json
