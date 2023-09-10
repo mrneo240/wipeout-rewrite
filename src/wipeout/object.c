@@ -460,6 +460,7 @@ void object_draw(Object *object, mat4_t *mat) {
     object_draw_chunked(object, mat);
     return;
   }
+
   vec3_t *vertex = object->vertices;
 
   Prm poly = {.primitive = object->primitives};

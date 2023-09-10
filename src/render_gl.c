@@ -8,6 +8,10 @@
 	#define glBindVertexArray glBindVertexArrayAPPLE
 	#define glDeleteVertexArrays glDeleteVertexArraysAPPLE
 
+// Consoles
+#elif defined(__PSP__) || defined(_arch_dreamcast)
+#error "Unsupported Renderer!"
+
 // Linux
 #elif defined(__unix__)
 	#include <GL/glew.h>

@@ -100,7 +100,7 @@ void platform_pump_events() {
 		}
 
 		// joystick
-		if (stick_x < 0) {
+		if (stick_x > 0) {
 			input_set_button_state(INPUT_GAMEPAD_L_STICK_LEFT, 0.0);
 			input_set_button_state(INPUT_GAMEPAD_L_STICK_LEFT+1, stick_x);
 		}

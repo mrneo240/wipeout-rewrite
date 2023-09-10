@@ -6,7 +6,7 @@ strip = '/usr/local/pspdev/bin/psp-strip'
 pkgconfig = '/usr/local/pspdev/bin/psp-pkg-config'
 
 [built-in options]
-c_args = ['-DTARGET_PSP', '-DPSP', '-D__PSP__', '-G0', '-D_PSP_FW_VERSION=500', '-DNDEBUG', '-Wformat=0', '-O3', '-falign-functions=64', '-flimit-function-alignment', '-g0', '-fno-rounding-math', '-ffp-contract=off', '-fsigned-char', '-I/usr/local/pspdev/psp/sdk/include']
+c_args = ['-DTARGET_PSP', '-DPSP', '-D__PSP__', '-G0', '-D_PSP_FW_VERSION=500', '-DNDEBUG', '-Wformat=0', '-falign-functions=64', '-flimit-function-alignment', '-fno-rounding-math', '-ffp-contract=off', '-fsigned-char', '-I/usr/local/pspdev/psp/sdk/include']
 c_link_args = ['-I/usr/local/pspdev/psp/sdk/lib', '-L/usr/local/pspdev/psp/sdk/lib', '-L/usr/local/pspdev/psp/lib', '-specs=/usr/local/pspdev/psp/sdk/lib/prxspecs', '-Wl,-q,-T/usr/local/pspdev/psp/sdk/lib/linkfile.prx', '/usr/local/pspdev/psp/sdk/lib/prxexports.o'  ]
 cpp_args = []
 cpp_link_args = []

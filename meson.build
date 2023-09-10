@@ -88,7 +88,10 @@ elif opt_platform == 'dc'
 
   dc_debug_dep = declare_dependency(link_args :  ['-g3', '-Wl,-Map=output.map'])
 
+  #custom unknown libgl (from nuquake?)
   libgldc_proj = subproject('libgl')
+  # upstream latest GLdc, currently BROKEN
+#  libgldc_proj = subproject('gldc_upstream')
   libgldc_dep = libgldc_proj.get_variable('libgldc_dep')
   platform_dep += [libgldc_dep, dc_debug_dep]
 
@@ -146,7 +149,7 @@ if opt_platform == 'dc'
 dc_binary = '1ST_READ.BIN'
 
 script_path = join_paths(meson.current_source_dir(), 'pkg_dreamcast.sh')
-custom_target('1ST_READ.BIN',
+custom_target(dc_binary,
   depends: exe,
   input : exe,
   output : 'fake',
@@ -158,7 +161,7 @@ elif opt_platform == 'psp'
 psp_binary = 'EBOOT.PBP'
 
 script_path = join_paths(meson.current_source_dir(), 'pkg_psp.sh')
-custom_target('EBOOT.PBP',
+custom_target(psp_binary,
   depends: exe,
   input : exe,
   output : 'fake',

@@ -439,6 +439,18 @@ void render_buffer_tris(tris_t tris, uint16_t texture_index, tris_texid_t *buffe
   render_texture_t *t = &textures[texture_index];
 
   for (int i = 0; i < 3; i++) {
+      if(t->size.x == 0){
+        // Not sure what is happening here
+        printf("fixing t->size.x %d t->scale.x %d\n", t->size.x, t->scale.x);
+        t->size.x = 1;
+        t->scale.x = 1;
+      }
+      if(t->size.y == 0){
+        // Not sure what is happening here
+        printf("fixing t->size.y %d t->scale.y %d\n", t->size.y, t->scale.y);
+        t->size.y = 1;
+        t->scale.y = 1;
+      }
     // resize back to (0,1) uv space
     tris.vertices[i].uv.x = (tris.vertices[i].uv.x / t->size.x) * t->scale.x;
     tris.vertices[i].uv.y = (tris.vertices[i].uv.y / t->size.y) * t->scale.y;
@@ -573,7 +585,9 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels) {
   if (ispow2(tex_width) && ispow2(tex_height)) {
     if (!texman_space_available(&vramTexman, tex_width * tex_height * 4)) {
       texman_clear(&vramTexman);
+#ifdef DEBUG
       printf("EMPTYING TEXTURE CACHE!\n");
+#endif
     }
 
     texId = texman_create(&vramTexman);
@@ -582,7 +596,9 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels) {
     tex_width = upper_power_of_two(tw);
     tex_height = upper_power_of_two(th);
     if (!texman_space_available(&vramTexman, tex_width * th * 4)) {
+#ifdef DEBUG
       printf("EMPTYING TEXTURE CACHE!\n");
+#endif
       texman_clear(&vramTexman);
     }
     texId = texman_create(&vramTexman);
@@ -593,7 +609,9 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels) {
     for (int32_t y = 0; y < th; y++) {
       memcpy(pb + tex_width * y, pixels + tw * y, tw * sizeof(rgba_t));
     }
+#ifdef DEBUG
     printf("padding texture (%d x %d) -> (%d x %d)\n", tw, th, tex_width, th);
+#endif
     texman_upload_swizzle(&vramTexman, tex_width, th, GU_PSM_8888, (void *)pb);
   }
 
@@ -611,11 +629,15 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels) {
 
   uint16_t texture_index = textures_len;
   textures_len++;
-  textures[texture_index] =
-      (render_texture_t){{tw, th}, {((float)tw) / ((float)tex_width), ((float)th) / ((float)tex_height)}, texId};
+  float u = tex_width == 0 ? 1:((float)tw) / ((float)tex_width);
+  float v = tex_width == 0 ? 1:((float)th) / ((float)tex_height);
 
+  textures[texture_index] =
+      (render_texture_t){{tw, th}, {u,v}, texId};
+#if 0
   printf("created texture (%d x %d)  scaled (%f x %f)\n", tw, th, ((float)tw) / ((float)tex_width),
          ((float)th) / ((float)tex_height));
+#endif
 
   // render_texture_dump(texture_index);
   return texture_index;

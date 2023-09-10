@@ -22,6 +22,11 @@
 	#include "types_psp.h"
 
 	typedef float scalar_t;
+
+	// Platform specific math funcs
+	#define platform_sin(x) sin(x)
+	#define platform_cos(x) cos(x)
+	#define platform_sqrt(x) sqrt(x)
 #else
 	#include "types_generic.h"
 

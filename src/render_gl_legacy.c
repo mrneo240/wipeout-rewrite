@@ -7,17 +7,22 @@
 void glCreateTextures(GLuint ignored, GLsizei n, GLuint *name) {
   glGenTextures(1, name);
 }
-// Linux
-#elif defined(__unix__)
-#include <GL/glew.h>
 
 // Dreamcast
 #elif defined(_arch_dreamcast)
-#include "gl.h"
-#include "glext.h"
-#include "glkos.h"
+#include "GL/gl.h"
+#include "GL/glext.h"
+#include "GL/glkos.h"
 
 #define CUSTOM_OPENGL_IMPL 1
+
+// Sony PSP
+#elif defined(__PSP__)
+#error "Use GU Renderer!"
+
+// Linux
+#elif defined(__unix__)
+#include <GL/glew.h>
 
 // WINDOWS
 #else
@@ -85,7 +90,7 @@ void render_init(vec2i_t size) {
   // Dreamcast
 #elif defined(_arch_dreamcast)
   // (nothing to do here)
-  int i = GL_DIRECT_BUFFER_KOS;
+  //int i = GL_DIRECT_BUFFER_KOS;
 
   GLdcConfig config;
   glKosInitConfig(&config);
@@ -635,8 +640,8 @@ void render_texture_replace_pixels(int16_t texture_index, rgba_t *pixels) {
 uint16_t render_textures_len() { return textures_len; }
 
 void render_textures_reset(uint16_t len) {
-  error_if(len > textures_len, "Invalid texture reset len %d >= %d", len, textures_len);
-  printf("render_textures_reset: resetting to %d of %d\n", len, textures_len);
+  error_if(len > textures_len, "Invalid texture reset len %lu >= %lu", len, textures_len);
+  printf("render_textures_reset: resetting to %u of %lu\n", len, textures_len);
   render_flush();
   GLuint texId;
 
