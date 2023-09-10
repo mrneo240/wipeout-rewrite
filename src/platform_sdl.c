@@ -247,6 +247,11 @@ uint32_t platform_store_userdata(const char *name, void *bytes, int32_t len) {
 	return file_store(path, bytes, len);
 }
 
+bool platform_file_exists(const char *name) {
+	char *path = strcat(strcpy(temp_path, path_assets), name);
+	return file_exists(path);
+}
+
 
 #if defined(RENDERER_GL) || defined(RENDERER_GL_LEGACY)
 

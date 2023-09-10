@@ -91,17 +91,18 @@ void render_init(vec2i_t size) {
 #elif defined(_arch_dreamcast)
   // (nothing to do here)
   //int i = GL_DIRECT_BUFFER_KOS;
-
+/*
   GLdcConfig config;
   glKosInitConfig(&config);
   config.autosort_enabled = GL_TRUE;
   config.fsaa_enabled = GL_FALSE;
-  /*@Note: These should be adjusted at some point */
   config.initial_op_capacity = 1024;
   config.initial_pt_capacity = 1024;
   config.initial_tr_capacity = 1024;
   config.initial_immediate_capacity = 0;
   glKosInitEx(&config);
+*/
+  glKosInit();
 #else
   // Windows, Linux
   glewExperimental = GL_TRUE;
@@ -144,7 +145,9 @@ void create_white_texture(void) {
 }
 
 void render_cleanup(void) {
-  // TODO
+#if defined(_arch_dreamcast)
+  //Todo
+#endif
 }
 
 static void render_setup_2d_projection_mat(void) {
@@ -278,12 +281,13 @@ void render_set_view_2d() {
 void render_set_model_mat(mat4_t *m) { memcpy(&model_mat, m, sizeof(mat4_t)); }
 
 void render_push_matrix() {
+  render_flush();
   glPushMatrix();
   glMultMatrixf(model_mat.m);
 }
 
 void render_pop_matrix() {
-  render_flush();
+  //render_flush();
   glPopMatrix();
 }
 
@@ -602,8 +606,7 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_width, tex_height, 0, GL_RGBA,
-               GL_UNSIGNED_BYTE, _pixels);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_width, tex_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, _pixels);
 
   if (pb) {
     mem_temp_free(pb);
@@ -643,12 +646,11 @@ void render_textures_reset(uint16_t len) {
   error_if(len > textures_len, "Invalid texture reset len %lu >= %lu", len, textures_len);
   printf("render_textures_reset: resetting to %u of %lu\n", len, textures_len);
   render_flush();
-  GLuint texId;
 
   // Clear completely and recreate the default white texture
   if (len == 0) {
     for (int i = 0; i < textures_len; i++) {
-      texId = textures[i].texId;
+      GLuint texId = textures[i].texId;
       glDeleteTextures(1, &texId);
     }
     create_white_texture();
@@ -657,9 +659,13 @@ void render_textures_reset(uint16_t len) {
 
   // Delete everything above
   for (int i = len; i < textures_len; i++) {
-    texId = textures[i].texId;
+    GLuint texId = textures[i].texId;
     glDeleteTextures(1, &texId);
   }
+
+#if defined(_arch_dreamcast)
+  glDefragmentTextureMemory_KOS();
+#endif
 
   textures_len = len;
 }

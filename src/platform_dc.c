@@ -3,9 +3,10 @@
 
 // Everything else
 #else
-	#error "Renderer only valid for Sega Dreamcast!"
+	#error "Platform only valid for Sega Dreamcast!"
 #endif
 
+#include <kos.h>
 #include "platform.h"
 #include "input.h"
 #include "system.h"
@@ -194,6 +195,11 @@ uint32_t platform_store_userdata(const char *name, void *bytes, int32_t len) {
 	return file_store(path, bytes, len);
 }
 
+bool platform_file_exists(const char *name) {
+	char *path = strcat(strcpy(temp_path, path_assets), name);
+	return file_exists(path);
+}
+
 #if defined(RENDERER_GL_LEGACY)
 
 	void platform_video_init() {
@@ -213,6 +219,8 @@ uint32_t platform_store_userdata(const char *name, void *bytes, int32_t len) {
 #endif
 
 int main(int argc, char *argv[]) {
+
+	cont_btn_callback(0, CONT_START, (cont_btn_callback_t)arch_exit);
 
 	char *_path_assets = NULL;
 	#ifdef PATH_ASSETS
@@ -258,6 +266,7 @@ int main(int argc, char *argv[]) {
 
 	system_cleanup();
 	platform_video_cleanup();
+	arch_exit();
 
 	return 0;
 }

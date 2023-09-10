@@ -20,6 +20,7 @@
 #include "main_menu.h"
 #include "title.h"
 #include "intro.h"
+#include "warning.h"
 
 #define TURN_ACCEL(V) NTSC_ACCELERATION(ANGLE_NORM_TO_RADIAN(FIXED_TO_FLOAT(YAW_VELOCITY(V))))
 #define TURN_VEL(V)   NTSC_VELOCITY(ANGLE_NORM_TO_RADIAN(FIXED_TO_FLOAT(YAW_VELOCITY(V))))
@@ -490,6 +491,7 @@ struct {
 	void (*init)(void);
 	void (*update)(void);
 } game_scenes[] = {
+	[GAME_SCENE_WARNING] = {warning_init, warning_update},
 	[GAME_SCENE_INTRO] = {intro_init, intro_update},
 	[GAME_SCENE_TITLE] = {title_init, title_update},
 	[GAME_SCENE_MAIN_MENU] = {main_menu_init, main_menu_update},
@@ -579,10 +581,14 @@ void game_init(void) {
 		}
 	}
 
-#if defined(NO_INTRO)
-	game_set_scene(GAME_SCENE_TITLE);
+#if defined(HAS_WARNING)
+	game_set_scene(GAME_SCENE_WARNING);
 #else
-	game_set_scene(GAME_SCENE_INTRO);
+	#if defined(NO_INTRO)
+		game_set_scene(GAME_SCENE_TITLE);
+	#else
+		game_set_scene(GAME_SCENE_INTRO);
+	#endif
 #endif
 }
 

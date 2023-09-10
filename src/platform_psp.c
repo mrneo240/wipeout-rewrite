@@ -12,7 +12,7 @@ PSP_HEAP_SIZE_MAX();
 PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER | THREAD_ATTR_VFPU);
 // Everything else
 #else
-#error "Renderer only valid for Sony PSP!"
+#error "Platform only valid for Sony PSP!"
 #endif
 
 #include "input.h"
@@ -257,6 +257,11 @@ uint8_t *platform_load_userdata(const char *name, uint32_t *bytes_read) {
 uint32_t platform_store_userdata(const char *name, void *bytes, int32_t len) {
 	char *path = strcat(strcpy(temp_path, path_userdata), name);
 	return file_store(path, bytes, len);
+}
+
+bool platform_file_exists(const char *name) {
+	char *path = strcat(strcpy(temp_path, path_assets), name);
+	return file_exists(path);
 }
 
 #if defined(RENDERER_GU)
