@@ -7,12 +7,14 @@
 #define platform_cos(x) cos(x)
 #define platform_sqrt(x) sqrt(x)
 
-typedef union rgba_t {
-	struct {
-		uint8_t r, g, b, a;
-	} as_rgba;
-	uint8_t as_components[4];
-	uint32_t as_uint32;
+static inline void platform_sincos(float r, float *s, float *c)
+{
+	*s = platform_sin(r);
+	*c = platform_cos(r);
+}
+
+typedef struct rgba_t {
+	uint8_t r, g, b, a;
 } rgba_t;
 
 typedef struct {
@@ -44,7 +46,7 @@ typedef union {
 	#error "No vertex format found!"
 #endif
 
-#define rgba(R, G, B, A) ((rgba_t){.as_rgba = {.r = R, .g = G, .b = B, .a = A}})
+#define rgba(R, G, B, A) ((rgba_t){.r = R, .g = G, .b = B, .a = A})
 #define vec2(X, Y) ((vec2_t){.x = X, .y = Y})
 #define vec3(X, Y, Z) ((vec3_t){.x = X, .y = Y, .z = Z})
 #define vec2i(X, Y) ((vec2i_t){.x = X, .y = Y})

@@ -344,6 +344,15 @@ typedef struct Object {
 	int16_t flags; // Next object in list
 	float radius;
 	struct Object *next; // Next object in list
+	// Precomputed, sorted by texture list of verts
+	bool is_chunked;
+	int16_t chunks_len; //Number of chunks
+	ObjectVertexChunk *chunks; // The actual sorted chunks of verts
+	void *base_chunk_ptr; // Should we keep this around?
+} Object;
+
+typedef union Prm {
+	uint8_t *ptr;
 	int16_t cba;
 	int16_t tsb;
 	uint8_t u0;

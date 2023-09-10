@@ -252,9 +252,7 @@ void scene_update_aurora_borealis(void) {
 			aurora_borealis.primitives[i]->color[1].b = (platform_sin(coords[1] * (phase + 0.039)) * 64.0) + 190;
 		}
 		if (aurora_borealis.grey_coords[i] != -1) {
-			aurora_borealis.primitives[i]->coltypedef union rgba_t {
-		uint8_t r, g, b, a;
-} rgba_t;or[2].r = (platform_sin(coords[2] * phase) * 64.0) + 190;
+			aurora_borealis.primitives[i]->color[2].r = (platform_sin(coords[2] * phase) * 64.0) + 190;
 			aurora_borealis.primitives[i]->color[2].g = (platform_sin(coords[2] * (phase + 0.054)) * 64.0) + 190;
 			aurora_borealis.primitives[i]->color[2].b = (platform_sin(coords[2] * (phase + 0.039)) * 64.0) + 190;
 		}
@@ -266,3 +264,4 @@ void scene_update_aurora_borealis(void) {
 		}
 	}
 }
+

@@ -18,6 +18,7 @@ PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER | THREAD_ATTR_VFPU);
 #include "input.h"
 #include "platform.h"
 #include "system.h"
+#include "utils.h"
 
 #include <string.h>
 #include <sys/time.h>
@@ -35,6 +36,10 @@ PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER | THREAD_ATTR_VFPU);
 
 static bool wants_to_exit = false;
 static void (*audio_callback)(float *buffer, uint32_t len) = NULL;
+
+static char *path_assets = "";
+static char *path_userdata = "";
+static char *temp_path = NULL;
 
 // Audio Threading
 #define SAMPLES_HIGH 544
@@ -214,6 +219,10 @@ scalar_t platform_now() {
   return (scalar_t)Sys_FloatTime();
 }
 
+bool platform_get_fullscreen(void) {
+	return true;
+}
+
 void platform_set_fullscreen(bool fullscreen) {
   // always fullscreen
 }
@@ -229,6 +238,25 @@ void platform_audio_callback(void *userdata, uint8_t *stream, int len) {
 void platform_set_audio_mix_cb(void (*cb)(float *buffer, uint32_t len)) {
   audio_callback = cb;
   // SDL_PauseAudioDevice(audio_device, 0);
+}
+
+uint8_t *platform_load_asset(const char *name, uint32_t *bytes_read) {
+	char *path = strcat(strcpy(temp_path, path_assets), name);
+	return file_load(path, bytes_read);
+}
+
+uint8_t *platform_load_userdata(const char *name, uint32_t *bytes_read) {
+	char *path = strcat(strcpy(temp_path, path_userdata), name);
+	if (!file_exists(path)) {
+		*bytes_read = 0;
+		return NULL;
+	}
+	return file_load(path, bytes_read);
+}
+
+uint32_t platform_store_userdata(const char *name, void *bytes, int32_t len) {
+	char *path = strcat(strcpy(temp_path, path_userdata), name);
+	return file_store(path, bytes, len);
 }
 
 #if defined(RENDERER_GU)
@@ -263,6 +291,30 @@ int main(int argc, char *argv[]) {
   sceKernelDelayThread(1000);
 
   last_time = sceKernelGetSystemTimeLow();
+
+  char *_path_assets = NULL;
+	#ifdef PATH_ASSETS
+		path_assets = TOSTRING(PATH_ASSETS);
+	#else
+		_path_assets = "";
+		if (_path_assets) {
+			path_assets = _path_assets;
+		}
+	#endif
+
+	char *_path_userdata = NULL;
+	#ifdef PATH_USERDATA
+		path_userdata = TOSTRING(PATH_USERDATA);
+	#else
+		_path_userdata = "";
+		if (_path_userdata) {
+			path_userdata = _path_userdata;
+		}
+	#endif
+
+	// Reserve some space for concatenating the asset and userdata paths with
+	// local filenames.
+	temp_path = mem_bump(max(strlen(path_assets), strlen(path_userdata)) + 64);
 
   // audio_device = SDL_OpenAudioDevice(NULL, 0, &(SDL_AudioSpec){
   //	.freq = 44100,

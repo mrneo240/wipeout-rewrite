@@ -96,6 +96,7 @@ elif opt_platform == 'dc'
   platform_dep += [libgldc_dep, dc_debug_dep]
 
   src_platform += ['src/platform_dc.c']
+#  src_platform_types = ['src/types_dreamcast.c']
   src_platform_types = ['src/types.c']
 else
   error('No platform chosen!')

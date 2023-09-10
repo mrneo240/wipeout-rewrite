@@ -134,6 +134,7 @@ void render_init(vec2i_t size) {
   sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
   sceGuDisable(GU_LIGHTING);
   sceGuEnable(GU_BLEND);
+  sceGuEnable(GU_ALPHA_TEST);
   sceGuDisable(GU_CULL_FACE);
   sceGuFrontFace(GU_CCW);
   sceGuDepthMask(GU_FALSE);
@@ -141,6 +142,9 @@ void render_init(vec2i_t size) {
   sceGuTexOffset(0.0f, 0.0f);
   sceGuTexWrap(GU_CLAMP, GU_CLAMP);
   sceGuAlphaFunc(GU_GREATER, 0, 0xff);
+  sceGuTexFunc(GU_TFX_MODULATE,GU_TCC_RGBA);
+  sceGuTexFilter(GU_LINEAR, GU_LINEAR);
+  sceGuShadeModel(GU_FLAT);
 
   sceGuFinish();
   sceGuSync(0, 0);
@@ -241,6 +245,8 @@ void render_frame_prepare() {
   // sceGuDepthMask(GU_TRUE);
   // sceGuDepthOffset(0);
   sceGuEnable(GU_TEXTURE_2D);
+  //sceGuEnable(GU_BLEND);
+  //sceGuEnable(GU_ALPHA_TEST);
 }
 
 void render_frame_end() {
@@ -265,7 +271,7 @@ void render_flush() {
   memcpy(buf, tris_buffer, sizeof(tris_t) * tris_len);
   sceGuDrawArray(GU_TRIANGLES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, 3 * tris_len,
                  0, buf);
-
+ 
   tris_len = 0;
 }
 
@@ -273,8 +279,10 @@ void render_draw_chunk(ObjectVertexChunk *chunk) {
   // Send all tris
   render_texture_t *t = &textures[chunk->texture_id];
   texman_bind_tex(&vramTexman, t->texId);
+  void *buf = (void *)ALIGN((unsigned int)sceGuGetMemory(sizeof(tris_t) * chunk->tris_len + 15), 16);
+  memcpy(buf, &chunk->tris[0], sizeof(tris_t) * chunk->tris_len);
   sceGuDrawArray(GU_TRIANGLES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D,
-                 chunk->tris_len * 3, 0, &chunk->tris[0]);
+                 chunk->tris_len * 3, 0, buf);
 }
 
 void render_set_view(vec3_t pos, vec3_t angles) {
@@ -402,14 +410,14 @@ void render_push_tris(tris_t tris, uint16_t texture_index) {
     // resize back to (0,1) uv space
     tris.vertices[i].uv.x = (tris.vertices[i].uv.x / t->size.x) * t->scale.x;
     tris.vertices[i].uv.y = (tris.vertices[i].uv.y / t->size.y) * t->scale.y;
-    if (tris.vertices[i].color.as_rgba.a == 0) {
+    if (tris.vertices[i].color.a == 0) {
       continue;
     }
 
     // move colors back to (0,255)
-    uint8_t R = tris.vertices[i].color.as_rgba.r;
-    uint8_t G = tris.vertices[i].color.as_rgba.g;
-    uint8_t B = tris.vertices[i].color.as_rgba.b;
+    uint8_t R = tris.vertices[i].color.r;
+    uint8_t G = tris.vertices[i].color.g;
+    uint8_t B = tris.vertices[i].color.b;
     if (R == 128) {
       R = 255;
     } else {
@@ -425,9 +433,9 @@ void render_push_tris(tris_t tris, uint16_t texture_index) {
     } else {
       B *= 2;
     }
-    tris.vertices[i].color.as_rgba.r = R;
-    tris.vertices[i].color.as_rgba.g = G;
-    tris.vertices[i].color.as_rgba.b = B;
+    tris.vertices[i].color.r = R;
+    tris.vertices[i].color.g = G;
+    tris.vertices[i].color.b = B;
   }
   tris_buffer[tris_len++] = tris;
 }
@@ -454,14 +462,14 @@ void render_buffer_tris(tris_t tris, uint16_t texture_index, tris_texid_t *buffe
     // resize back to (0,1) uv space
     tris.vertices[i].uv.x = (tris.vertices[i].uv.x / t->size.x) * t->scale.x;
     tris.vertices[i].uv.y = (tris.vertices[i].uv.y / t->size.y) * t->scale.y;
-    if (tris.vertices[i].color.as_rgba.a == 0) {
+    if (tris.vertices[i].color.a == 0) {
       continue;
     }
 
     // move colors back to (0,255)
-    uint8_t R = tris.vertices[i].color.as_rgba.r;
-    uint8_t G = tris.vertices[i].color.as_rgba.g;
-    uint8_t B = tris.vertices[i].color.as_rgba.b;
+    uint8_t R = tris.vertices[i].color.r;
+    uint8_t G = tris.vertices[i].color.g;
+    uint8_t B = tris.vertices[i].color.b;
     if (R == 128) {
       R = 255;
     } else {
@@ -477,9 +485,9 @@ void render_buffer_tris(tris_t tris, uint16_t texture_index, tris_texid_t *buffe
     } else {
       B *= 2;
     }
-    tris.vertices[i].color.as_rgba.r = R;
-    tris.vertices[i].color.as_rgba.g = G;
-    tris.vertices[i].color.as_rgba.b = B;
+    tris.vertices[i].color.r = R;
+    tris.vertices[i].color.g = G;
+    tris.vertices[i].color.b = B;
   }
 
   (*buffer_out).tri = tris;

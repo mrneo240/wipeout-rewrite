@@ -2,12 +2,8 @@
 #define TYPES_PSP_H
 #include <math.h>
 
-typedef union rgba_t {
-	struct {
-		uint8_t r, g, b, a;
-	} as_rgba;
-	uint8_t as_components[4];
-	uint32_t as_uint32;
+typedef struct rgba_t {
+	uint8_t r, g, b, a;
 } rgba_t;
 
 typedef struct {
@@ -39,7 +35,7 @@ typedef union {
 	#error "No vertex format found!"
 #endif
 
-#define rgba(R, G, B, A) ((rgba_t){.as_rgba = {.r = R, .g = G, .b = B, .a = A}})
+#define rgba(R, G, B, A) ((rgba_t){.r = R, .g = G, .b = B, .a = A})
 #define vec2(X, Y) ((vec2_t){.x = X, .y = Y})
 #define vec3(X, Y, Z) ((vec3_t){.x = X, .y = Y, .z = Z})
 #define vec2i(X, Y) ((vec2i_t){.x = X, .y = Y})

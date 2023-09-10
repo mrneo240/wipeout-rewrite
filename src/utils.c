@@ -5,6 +5,15 @@
 #include "utils.h"
 #include "mem.h"
 
+rgba_t rgba_from_u32(uint32_t v) {
+	return rgba(
+		((v >> 24) & 0xff),
+		((v >> 16) & 0xff),
+		((v >> 8) & 0xff),
+		255
+	);
+}
+
 char temp_path[64];
 char *get_path(const char *dir, const char *file) {
 	strcpy(temp_path, dir);
@@ -14,46 +23,12 @@ char *get_path(const char *dir, const char *file) {
 
 
 bool file_exists(const char *path) {
-#if defined(_arch_dreamcast)
-	char _path[256];
-	memset(_path, 0, sizeof(path));
-	strcpy(_path, "/cd/");
-	strcat(_path, path);
-
-	struct stat s;
-	int f = (stat(_path, &s) == 0);
-	if(!f){
-		// if not on cd, try /pc/
-		memset(_path, 0, sizeof(path));
-		strcpy(_path, "/pc/");
-		strcat(_path, path);
-		struct stat s;
-		f = (stat(_path, &s) == 0);
-	}
-	return f;
-#else
 	struct stat s;
 	return (stat(path, &s) == 0);
-#endif
 }
 
 uint8_t *file_load(const char *path, uint32_t *bytes_read) {
-#if defined(_arch_dreamcast)
-	char _path[256];
-	memset(_path, 0, sizeof(path));
-	strcpy(_path, "/cd/");
-	strcat(_path, path);
-	FILE *f = fopen(_path, "rb");
-	if(!f){
-		// if not on cd, try /pc/
-		memset(_path, 0, sizeof(path));
-		strcpy(_path, "/pc/");
-		strcat(_path, path);
-		f = fopen(_path, "rb");
-	}
-#else
 	FILE *f = fopen(path, "rb");
-#endif
 	error_if(!f, "Could not open file for reading: %s", path);
 
 	fseek(f, 0, SEEK_END);

@@ -818,13 +818,13 @@ void object_chunk(Object *object) {
                              .vertices = {
                                  {.pos = vertex[coord2],
                                   .uv = {poly.gt3->u2, poly.gt3->v2},
-                                  .color = poly.gt3->colour[2]},
+                                  .color = poly.gt3->color[2]},
                                  {.pos = vertex[coord1],
                                   .uv = {poly.gt3->u1, poly.gt3->v1},
-                                  .color = poly.gt3->colour[1]},
+                                  .color = poly.gt3->color[1]},
                                  {.pos = vertex[coord0],
                                   .uv = {poly.gt3->u0, poly.gt3->v0},
-                                  .color = poly.gt3->colour[0]},
+                                  .color = poly.gt3->color[0]},
                              }},
                          poly.gt3->texture, (temp_buffer + tri_idx));
 
@@ -842,26 +842,26 @@ void object_chunk(Object *object) {
                              .vertices = {
                                  {.pos = vertex[coord2],
                                   .uv = {poly.gt4->u2, poly.gt4->v2},
-                                  .color = poly.gt4->colour[2]},
+                                  .color = poly.gt4->color[2]},
                                  {.pos = vertex[coord1],
                                   .uv = {poly.gt4->u1, poly.gt4->v1},
-                                  .color = poly.gt4->colour[1]},
+                                  .color = poly.gt4->color[1]},
                                  {.pos = vertex[coord0],
                                   .uv = {poly.gt4->u0, poly.gt4->v0},
-                                  .color = poly.gt4->colour[0]},
+                                  .color = poly.gt4->color[0]},
                              }},
                          poly.gt4->texture, (temp_buffer + tri_idx + 0));
       render_buffer_tris((tris_t){
                              .vertices = {
                                  {.pos = vertex[coord2],
                                   .uv = {poly.gt4->u2, poly.gt4->v2},
-                                  .color = poly.gt4->colour[2]},
+                                  .color = poly.gt4->color[2]},
                                  {.pos = vertex[coord3],
                                   .uv = {poly.gt4->u3, poly.gt4->v3},
-                                  .color = poly.gt4->colour[3]},
+                                  .color = poly.gt4->color[3]},
                                  {.pos = vertex[coord1],
                                   .uv = {poly.gt4->u1, poly.gt4->v1},
-                                  .color = poly.gt4->colour[1]},
+                                  .color = poly.gt4->color[1]},
                              }},
                          poly.gt4->texture, (temp_buffer + tri_idx + 1));
       poly.gt4 += 1;
@@ -876,13 +876,13 @@ void object_chunk(Object *object) {
                              .vertices = {
                                  {.pos = vertex[coord2],
                                   .uv = {poly.ft3->u2, poly.ft3->v2},
-                                  .color = poly.ft3->colour},
+                                  .color = poly.ft3->color},
                                  {.pos = vertex[coord1],
                                   .uv = {poly.ft3->u1, poly.ft3->v1},
-                                  .color = poly.ft3->colour},
+                                  .color = poly.ft3->color},
                                  {.pos = vertex[coord0],
                                   .uv = {poly.ft3->u0, poly.ft3->v0},
-                                  .color = poly.ft3->colour},
+                                  .color = poly.ft3->color},
                              }},
                          poly.ft3->texture, (temp_buffer + tri_idx + 0));
 
@@ -899,26 +899,26 @@ void object_chunk(Object *object) {
                              .vertices = {
                                  {.pos = vertex[coord2],
                                   .uv = {poly.ft4->u2, poly.ft4->v2},
-                                  .color = poly.ft4->colour},
+                                  .color = poly.ft4->color},
                                  {.pos = vertex[coord1],
                                   .uv = {poly.ft4->u1, poly.ft4->v1},
-                                  .color = poly.ft4->colour},
+                                  .color = poly.ft4->color},
                                  {.pos = vertex[coord0],
                                   .uv = {poly.ft4->u0, poly.ft4->v0},
-                                  .color = poly.ft4->colour},
+                                  .color = poly.ft4->color},
                              }},
                          poly.ft4->texture, (temp_buffer + tri_idx + 0));
       render_buffer_tris((tris_t){
                              .vertices = {
                                  {.pos = vertex[coord2],
                                   .uv = {poly.ft4->u2, poly.ft4->v2},
-                                  .color = poly.ft4->colour},
+                                  .color = poly.ft4->color},
                                  {.pos = vertex[coord3],
                                   .uv = {poly.ft4->u3, poly.ft4->v3},
-                                  .color = poly.ft4->colour},
+                                  .color = poly.ft4->color},
                                  {.pos = vertex[coord1],
                                   .uv = {poly.ft4->u1, poly.ft4->v1},
-                                  .color = poly.ft4->colour},
+                                  .color = poly.ft4->color},
                              }},
                          poly.ft4->texture, (temp_buffer + tri_idx + 1));
 
@@ -934,11 +934,11 @@ void object_chunk(Object *object) {
       render_buffer_tris((tris_t){
                              .vertices = {
                                  {.pos = vertex[coord2],
-                                  .color = poly.g3->colour[2]},
+                                  .color = poly.g3->color[2]},
                                  {.pos = vertex[coord1],
-                                  .color = poly.g3->colour[1]},
+                                  .color = poly.g3->color[1]},
                                  {.pos = vertex[coord0],
-                                  .color = poly.g3->colour[0]},
+                                  .color = poly.g3->color[0]},
                              }},
                          RENDER_NO_TEXTURE, (temp_buffer + tri_idx + 0));
 
@@ -955,21 +955,21 @@ void object_chunk(Object *object) {
       render_buffer_tris((tris_t){
                              .vertices = {
                                  {.pos = vertex[coord2],
-                                  .color = poly.g4->colour[2]},
+                                  .color = poly.g4->color[2]},
                                  {.pos = vertex[coord1],
-                                  .color = poly.g4->colour[1]},
+                                  .color = poly.g4->color[1]},
                                  {.pos = vertex[coord0],
-                                  .color = poly.g4->colour[0]},
+                                  .color = poly.g4->color[0]},
                              }},
                          RENDER_NO_TEXTURE, (temp_buffer + tri_idx + 0));
       render_buffer_tris((tris_t){
                              .vertices = {
                                  {.pos = vertex[coord2],
-                                  .color = poly.g4->colour[2]},
+                                  .color = poly.g4->color[2]},
                                  {.pos = vertex[coord3],
-                                  .color = poly.g4->colour[3]},
+                                  .color = poly.g4->color[3]},
                                  {.pos = vertex[coord1],
-                                  .color = poly.g4->colour[1]},
+                                  .color = poly.g4->color[1]},
                              }},
                          RENDER_NO_TEXTURE, (temp_buffer + tri_idx + 1));
 
@@ -985,11 +985,11 @@ void object_chunk(Object *object) {
       render_buffer_tris((tris_t){
                              .vertices = {
                                  {.pos = vertex[coord2],
-                                  .color = poly.f3->colour},
+                                  .color = poly.f3->color},
                                  {.pos = vertex[coord1],
-                                  .color = poly.f3->colour},
+                                  .color = poly.f3->color},
                                  {.pos = vertex[coord0],
-                                  .color = poly.f3->colour},
+                                  .color = poly.f3->color},
                              }},
                          RENDER_NO_TEXTURE, (temp_buffer + tri_idx + 0));
 
@@ -1006,21 +1006,21 @@ void object_chunk(Object *object) {
       render_buffer_tris((tris_t){
                              .vertices = {
                                  {.pos = vertex[coord2],
-                                  .color = poly.f4->colour},
+                                  .color = poly.f4->color},
                                  {.pos = vertex[coord1],
-                                  .color = poly.f4->colour},
+                                  .color = poly.f4->color},
                                  {.pos = vertex[coord0],
-                                  .color = poly.f4->colour},
+                                  .color = poly.f4->color},
                              }},
                          RENDER_NO_TEXTURE, (temp_buffer + tri_idx + 0));
       render_buffer_tris((tris_t){
                              .vertices = {
                                  {.pos = vertex[coord2],
-                                  .color = poly.f4->colour},
+                                  .color = poly.f4->color},
                                  {.pos = vertex[coord3],
-                                  .color = poly.f4->colour},
+                                  .color = poly.f4->color},
                                  {.pos = vertex[coord1],
-                                  .color = poly.f4->colour},
+                                  .color = poly.f4->color},
                              }},
                          RENDER_NO_TEXTURE, (temp_buffer + tri_idx + 1));
 
@@ -1037,7 +1037,7 @@ void object_chunk(Object *object) {
               vertex[coord0].y + ((poly.primitive->type == PRM_TYPE_TSPR ? poly.spr->height : -poly.spr->height) >> 1),
               vertex[coord0].z),
           vec2i(poly.spr->width, poly.spr->height),
-          poly.spr->colour,
+          poly.spr->color,
           poly.spr->texture,
           (temp_buffer + tri_idx + 0));
 

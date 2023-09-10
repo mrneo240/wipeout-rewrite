@@ -353,7 +353,7 @@ int main(int argc, char *argv[]) {
 	#ifdef PATH_ASSETS
 		path_assets = TOSTRING(PATH_ASSETS);
 	#else
-		sdl_path_assets = SDL_GetBasePath();
+		//sdl_path_assets = SDL_GetBasePath();
 		if (sdl_path_assets) {
 			path_assets = sdl_path_assets;
 		}

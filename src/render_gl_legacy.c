@@ -369,14 +369,14 @@ void render_push_tris(tris_t tris, uint16_t texture_index) {
     // resize back to (0,1) uv space
     tris.vertices[i].uv.x = (tris.vertices[i].uv.x / t->size.x) * t->scale.x;
     tris.vertices[i].uv.y = (tris.vertices[i].uv.y / t->size.y) * t->scale.y;
-    if (tris.vertices[i].color.as_rgba.a == 0) {
+    if (tris.vertices[i].color.a == 0) {
       continue;
     }
 
     // move colors back to (0,255)
-    uint8_t R = tris.vertices[i].color.as_rgba.r;
-    uint8_t G = tris.vertices[i].color.as_rgba.g;
-    uint8_t B = tris.vertices[i].color.as_rgba.b;
+    uint8_t R = tris.vertices[i].color.r;
+    uint8_t G = tris.vertices[i].color.g;
+    uint8_t B = tris.vertices[i].color.b;
     if (R == 128) {
       R = 255;
     } else {
@@ -392,9 +392,9 @@ void render_push_tris(tris_t tris, uint16_t texture_index) {
     } else {
       B *= 2;
     }
-    tris.vertices[i].color.as_rgba.r = R;
-    tris.vertices[i].color.as_rgba.g = G;
-    tris.vertices[i].color.as_rgba.b = B;
+    tris.vertices[i].color.r = R;
+    tris.vertices[i].color.g = G;
+    tris.vertices[i].color.b = B;
   }
   tris_buffer[tris_len++] = tris;
 }
@@ -409,14 +409,14 @@ void render_buffer_tris(tris_t tris, uint16_t texture_index, tris_texid_t *buffe
     // resize back to (0,1) uv space
     tris.vertices[i].uv.x = (tris.vertices[i].uv.x / t->size.x) * t->scale.x;
     tris.vertices[i].uv.y = (tris.vertices[i].uv.y / t->size.y) * t->scale.y;
-    if (tris.vertices[i].color.as_rgba.a == 0) {
+    if (tris.vertices[i].color.a == 0) {
       continue;
     }
 
     // move colors back to (0,255)
-    uint8_t R = tris.vertices[i].color.as_rgba.r;
-    uint8_t G = tris.vertices[i].color.as_rgba.g;
-    uint8_t B = tris.vertices[i].color.as_rgba.b;
+    uint8_t R = tris.vertices[i].color.r;
+    uint8_t G = tris.vertices[i].color.g;
+    uint8_t B = tris.vertices[i].color.b;
     if (R == 128) {
       R = 255;
     } else {
@@ -432,9 +432,9 @@ void render_buffer_tris(tris_t tris, uint16_t texture_index, tris_texid_t *buffe
     } else {
       B *= 2;
     }
-    tris.vertices[i].color.as_rgba.r = R;
-    tris.vertices[i].color.as_rgba.g = G;
-    tris.vertices[i].color.as_rgba.b = B;
+    tris.vertices[i].color.r = R;
+    tris.vertices[i].color.g = G;
+    tris.vertices[i].color.b = B;
   }
 
   (*buffer_out).tri = tris;

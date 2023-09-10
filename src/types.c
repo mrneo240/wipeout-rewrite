@@ -2,15 +2,6 @@
 #include "types.h"
 #include "utils.h"
 
-rgba_t rgba_from_u32(uint32_t v) {
-	return rgba(
-		((v >> 24) & 0xff),
-		((v >> 16) & 0xff),
-		((v >> 8) & 0xff),
-		255
-	);
-}
-
 vec3_t vec3_wrap_angle(vec3_t a) {
 	return vec3(wrap_angle(a.x), wrap_angle(a.y), wrap_angle(a.z));
 }
@@ -126,8 +117,3 @@ void mat4_mul(mat4_t *res, mat4_t *a, mat4_t *b) {
 	res->m[15] = b->m[12] * a->m[3] + b->m[13] * a->m[7] + b->m[14] * a->m[11] + b->m[15] * a->m[15];
 }
 
-void platform_sincos(float r, float *s, float *c)
-{
-	*s = platform_sin(r);
-	*c = platform_cos(r);
-}
