@@ -220,7 +220,7 @@ bool platform_file_exists(const char *name) {
 
 int main(int argc, char *argv[]) {
 
-	cont_btn_callback(0, CONT_START, (cont_btn_callback_t)arch_exit);
+	cont_btn_callback(0, CONT_START | CONT_A | CONT_B | CONT_X | CONT_Y, (cont_btn_callback_t)arch_exit);
 
 	char *_path_assets = NULL;
 	#ifdef PATH_ASSETS

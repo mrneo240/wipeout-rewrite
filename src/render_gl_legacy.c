@@ -587,6 +587,8 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels) {
   tex_height = upper_power_of_two(th);
   // Check if npot and pad if not
   if (tw != tex_width || th != tex_height) {
+  #if 0
+  // Full Pad, correctly and unambigously pad width and height
     pb = mem_temp_alloc(sizeof(rgba_t) * tex_width * tex_height);
     memset(pb, 0, sizeof(rgba_t) * tex_width * tex_height);
 
@@ -597,6 +599,18 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels) {
     _pixels = pb;
     printf("padding texture (%3d x %3d) -> (%3d x %3d)\n", tw, th, tex_width,
            tex_height);
+  #else
+  // Half Pad,only pads to width, lies about height.
+    pb = mem_temp_alloc(sizeof(rgba_t) * tex_width * th);
+    memset(pb, 0, sizeof(rgba_t) * tex_width * th);
+
+    // Texture
+    for (int32_t y = 0; y < th; y++) {
+      memcpy(pb + tex_width * y, pixels + tw * y, tw * sizeof(rgba_t));
+    }
+    _pixels = pb;
+    printf("fake padded texture (%3d x %3d) -> (%3d x %3d)\n", tw, th, tex_width, tex_height);
+  #endif
   }
 #endif
   GLuint texId;
@@ -663,7 +677,7 @@ void render_textures_reset(uint16_t len) {
     glDeleteTextures(1, &texId);
   }
 
-#if defined(_arch_dreamcast)
+#if defined(_arch_dreamcast) && defined(GL_FREE_TEXTURE_MEMORY_KOS)
   glDefragmentTextureMemory_KOS();
 #endif
 
