@@ -269,9 +269,8 @@ void render_flush() {
 
   void *buf = (void *)ALIGN((unsigned int)sceGuGetMemory(sizeof(tris_t) * tris_len + 15), 16);
   memcpy(buf, tris_buffer, sizeof(tris_t) * tris_len);
-  sceGuDrawArray(GU_TRIANGLES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, 3 * tris_len,
-                 0, buf);
- 
+  sceGuDrawArray(GU_TRIANGLES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, 3 * tris_len, 0, buf);
+
   tris_len = 0;
 }
 
@@ -279,10 +278,14 @@ void render_draw_chunk(ObjectVertexChunk *chunk) {
   // Send all tris
   render_texture_t *t = &textures[chunk->texture_id];
   texman_bind_tex(&vramTexman, t->texId);
+
+  // Not sure if benefit to copying to vram?
+#if 0
   void *buf = (void *)ALIGN((unsigned int)sceGuGetMemory(sizeof(tris_t) * chunk->tris_len + 15), 16);
   memcpy(buf, &chunk->tris[0], sizeof(tris_t) * chunk->tris_len);
-  sceGuDrawArray(GU_TRIANGLES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D,
-                 chunk->tris_len * 3, 0, buf);
+  sceGuDrawArray(GU_TRIANGLES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, chunk->tris_len * 3, 0, buf);
+#endif
+  sceGuDrawArray(GU_TRIANGLES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, chunk->tris_len * 3, 0, chunk->tris);
 }
 
 void render_set_view(vec3_t pos, vec3_t angles) {
