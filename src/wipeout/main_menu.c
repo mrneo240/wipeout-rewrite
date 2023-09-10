@@ -512,8 +512,10 @@ static void objects_unpack_imp(Object **dest_array, int len, Object *src) {
 }
 
 
-void main_menu_init() {
+void main_menu_init(void) {
 	g.is_attract_mode = false;
+
+	ships_reset_exhaust_plumes();
 
 	main_menu = mem_bump(sizeof(menu_t));
 
@@ -532,7 +534,7 @@ void main_menu_init() {
 	page_main_init(main_menu);
 }
 
-void main_menu_update() {
+void main_menu_update(void) {
 	render_set_view_2d();
 	render_push_2d(vec2i(0, 0), render_size(), rgba(128, 128, 128, 255), background);
 

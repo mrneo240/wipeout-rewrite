@@ -13,39 +13,29 @@ static scalar_t time_scale = 1.0;
 static scalar_t tick_last;
 static scalar_t cycle_time = 0;
 
-void system_init() {
+void system_init(void) {
 	time_real = platform_now();
 	input_init();
 	render_init(platform_screen_size());
 	game_init();
 }
 
-void system_cleanup() {
+void system_cleanup(void) {
 	render_cleanup();
 	input_cleanup();
 }
 
-void system_exit() {
+void system_exit(void) {
 	platform_exit();
 }
 
-void system_update() {
+void system_update(void) {
 	scalar_t time_real_now = platform_now();
 	scalar_t real_delta = time_real_now - time_real;
 	time_real = time_real_now;
 	tick_last = min(real_delta, 0.1) * time_scale;
 	time_scaled += tick_last;
 
-#if 0
-	uint32_t a = 0;
-	uint32_t b = SDL_GetTicks();
-	uint32_t delta = 0;
-	while (delta < 1000.0/15.0) {
-		a = SDL_GetTicks();
-    delta = a - b;
-		SDL_Delay(1);
-	}
-#endif
 	// FIXME: come up with a better way to wrap the cycle_time, so that it
 	// doesn't lose precission, but also doesn't jump upon reset.
 	cycle_time = time_scaled;
@@ -62,7 +52,7 @@ void system_update() {
 	mem_temp_check();
 }
 
-void system_reset_cycle_time() {
+void system_reset_cycle_time(void) {
 	cycle_time = 0;
 }
 
@@ -70,7 +60,7 @@ void system_resize(vec2i_t size) {
 	render_set_screen_size(size);
 }
 
-scalar_t system_time_scale_get() {
+scalar_t system_time_scale_get(void) {
 	return time_scale;
 }
 
@@ -78,14 +68,14 @@ void system_time_scale_set(scalar_t scale) {
 	time_scale = scale;
 }
 
-scalar_t system_tick() {
+scalar_t system_tick(void) {
 	return tick_last;
 }
 
-scalar_t system_time() {
+scalar_t system_time(void) {
 	return time_scaled;
 }
 
-scalar_t system_cycle_time() {
+scalar_t system_cycle_time(void) {
 	return cycle_time;
 }

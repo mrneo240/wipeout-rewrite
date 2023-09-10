@@ -13,8 +13,8 @@ char *get_path(const char *dir, const char *file) {
 }
 
 
-bool file_exists(char *path) {
-	#if defined(_arch_dreamcast)
+bool file_exists(const char *path) {
+#if defined(_arch_dreamcast)
 	char _path[256];
 	memset(_path, 0, sizeof(path));
 	strcpy(_path, "/cd/");
@@ -34,10 +34,10 @@ bool file_exists(char *path) {
 #else
 	struct stat s;
 	return (stat(path, &s) == 0);
-	#endif
+#endif
 }
 
-uint8_t *file_load(char *path, uint32_t *bytes_read) {
+uint8_t *file_load(const char *path, uint32_t *bytes_read) {
 #if defined(_arch_dreamcast)
 	char _path[256];
 	memset(_path, 0, sizeof(path));
@@ -77,7 +77,7 @@ uint8_t *file_load(char *path, uint32_t *bytes_read) {
 	return bytes;
 }
 
-uint32_t file_store(char *path, void *bytes, int32_t len) {
+uint32_t file_store(const char *path, void *bytes, int32_t len) {
 	#if defined(_arch_dreamcast)
 		printf("file writing ignored! %s\n", path);
 		return len;
