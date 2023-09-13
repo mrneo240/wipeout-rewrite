@@ -59,8 +59,7 @@ typedef struct {
 
 uint16_t RENDER_NO_TEXTURE;
 
-static tris_t __attribute__((aligned(32)))
-tris_buffer[RENDER_TRIS_BUFFER_CAPACITY];
+static tris_t __attribute__((aligned(32))) tris_buffer[RENDER_TRIS_BUFFER_CAPACITY];
 static uint32_t tris_len = 0;
 static float screen_2d_z = -1;
 
@@ -90,18 +89,8 @@ void render_init(vec2i_t size) {
   // Dreamcast
 #elif defined(_arch_dreamcast)
   // (nothing to do here)
-  //int i = GL_DIRECT_BUFFER_KOS;
-/*
-  GLdcConfig config;
-  glKosInitConfig(&config);
-  config.autosort_enabled = GL_TRUE;
-  config.fsaa_enabled = GL_FALSE;
-  config.initial_op_capacity = 1024;
-  config.initial_pt_capacity = 1024;
-  config.initial_tr_capacity = 1024;
-  config.initial_immediate_capacity = 0;
-  glKosInitEx(&config);
-*/
+  // int i = GL_DIRECT_BUFFER_KOS;
+
   glKosInit();
 #else
   // Windows, Linux
@@ -138,19 +127,40 @@ void create_white_texture(void) {
   RENDER_NO_TEXTURE = render_texture_create(8, 8, white_pixels);
 #else
   // Create white texture
-  rgba_t white_pixels[4] = {rgba(128, 128, 128, 255), rgba(128, 128, 128, 255),
-                            rgba(128, 128, 128, 255), rgba(128, 128, 128, 255)};
+  rgba_t white_pixels[4] = {rgba(128, 128, 128, 255), rgba(128, 128, 128, 255), rgba(128, 128, 128, 255), rgba(128, 128, 128, 255)};
   RENDER_NO_TEXTURE = render_texture_create(2, 2, white_pixels);
 #endif
 }
 
 void render_cleanup(void) {
 #if defined(_arch_dreamcast)
-  //Todo
+  // Todo
 #endif
 }
 
 static void render_setup_2d_projection_mat(void) {
+#if 0
+  float near = -1;
+  float far = 1;
+  float left = 0;
+  float right = screen_size.x;
+  float bottom = screen_size.y;
+  float top = 0;
+  float lr = 1 / (left - right);
+  float bt = 1 / (bottom - top);
+  float nf = 1 / (near - far);
+
+  projection_mat_2d = mat4_identity();
+
+  projection_mat_2d.m[0] = 2.0f / (right - left);
+  projection_mat_2d.m[5] = 2.0f / (top - bottom);
+  projection_mat_2d.m[10] = -2.0f / (far - near);
+  projection_mat_2d.m[12] = -(right + left) / (right - left);
+  projection_mat_2d.m[13] = -(top + bottom) / (top - bottom);
+  projection_mat_2d.m[14] = -(far + near) / (far - near);
+  return;
+#endif
+#if 1
   float near = -1;
   float far = 1;
   float left = 0;
@@ -161,8 +171,11 @@ static void render_setup_2d_projection_mat(void) {
   float bt = 1 / (bottom - top);
   float nf = 1 / (near - far);
   projection_mat_2d =
-      mat4(-2 * lr, 0, 0, 0, 0, -2 * bt, 0, 0, 0, 0, 2 * nf, 0,
+      mat4( -2 * lr, 0, 0, 0,
+            0, -2 * bt, 0, 0,
+            0, 0, 2 * nf, 0,
            (left + right) * lr, (top + bottom) * bt, (far + near) * nf, 1);
+#endif
 }
 
 static void render_setup_3d_projection_mat() {
@@ -171,12 +184,10 @@ static void render_setup_3d_projection_mat() {
   // view. For the original 4/3 aspect ratio this equates to a vertial fov
   // of 73.75deg.
   float aspect = (float)screen_size.x / (float)screen_size.y;
-  float fov = (73.75 / 180.0) * 3.14159265358;
-  float f = 1.0 / tan(fov / 2);
+  float fov = (73.75 / 180.0) * M_PI;
+  float f = 1.0 / tanf(fov / 2);
   float nf = 1.0 / (NEAR_PLANE - FAR_PLANE);
-  projection_mat_3d =
-      mat4(f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (FAR_PLANE + NEAR_PLANE) * nf,
-           -1, 0, 0, 2 * FAR_PLANE * NEAR_PLANE * nf, 0);
+  projection_mat_3d = mat4(f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (FAR_PLANE + NEAR_PLANE) * nf, -1, 0, 0, 2 * FAR_PLANE * NEAR_PLANE * nf, 0);
 }
 
 void render_resize(vec2i_t size) {
@@ -187,7 +198,9 @@ void render_resize(vec2i_t size) {
   render_setup_3d_projection_mat();
 }
 
-vec2i_t render_size() { return screen_size; }
+vec2i_t render_size() {
+  return screen_size;
+}
 
 void render_set_resolution(render_resolution_t res) {}
 void render_set_post_effect(render_post_effect_t post) {}
@@ -222,12 +235,9 @@ void render_flush() {
   // Send all tris
   render_texture_t *t = &textures[texture_index_prev];
   glBindTexture(GL_TEXTURE_2D, t->texId);
-  glVertexPointer(3, GL_FLOAT, sizeof(vertex_t),
-                  &tris_buffer[0].vertices[0].pos);
-  glTexCoordPointer(2, GL_FLOAT, sizeof(vertex_t),
-                    &tris_buffer[0].vertices[0].uv);
-  glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex_t),
-                 &tris_buffer[0].vertices[0].color);
+  glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), &(tris_buffer[0].vertices[0].pos));
+  glTexCoordPointer(2, GL_FLOAT, sizeof(vertex_t), &(tris_buffer[0].vertices[0].uv));
+  glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex_t), &(tris_buffer[0].vertices[0].color));
   glDrawArrays(GL_TRIANGLES, 0, tris_len * 3);
   tris_len = 0;
 }
@@ -235,12 +245,9 @@ void render_flush() {
 void render_draw_chunk(ObjectVertexChunk *chunk) {
   render_texture_t *t = &textures[chunk->texture_id];
   glBindTexture(GL_TEXTURE_2D, t->texId);
-  glVertexPointer(3, GL_FLOAT, sizeof(vertex_t),
-                  &chunk->tris[0].vertices[0].pos);
-  glTexCoordPointer(2, GL_FLOAT, sizeof(vertex_t),
-                    &chunk->tris[0].vertices[0].uv);
-  glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex_t),
-                 &chunk->tris[0].vertices[0].color);
+  glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), &chunk->tris[0].vertices[0].pos);
+  glTexCoordPointer(2, GL_FLOAT, sizeof(vertex_t), &chunk->tris[0].vertices[0].uv);
+  glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex_t), &chunk->tris[0].vertices[0].color);
   glDrawArrays(GL_TRIANGLES, 0, chunk->tris_len * 3);
 }
 
@@ -251,8 +258,7 @@ void render_set_view(vec3_t pos, vec3_t angles) {
 
   view_mat = mat4_identity();
   mat4_set_translation(&view_mat, vec3(0, 0, 0));
-  mat4_set_roll_pitch_yaw(&view_mat,
-                          vec3(angles.x, -angles.y + M_PI, angles.z + M_PI));
+  mat4_set_roll_pitch_yaw(&view_mat, vec3(angles.x, -angles.y + M_PI, angles.z + M_PI));
   mat4_translate(&view_mat, vec3_inv(pos));
   mat4_set_yaw_pitch_roll(&sprite_mat, vec3(-angles.x, angles.y - M_PI, 0));
 
@@ -278,7 +284,9 @@ void render_set_view_2d() {
   glLoadMatrixf(mat4_identity().m);
 }
 
-void render_set_model_mat(mat4_t *m) { memcpy(&model_mat, m, sizeof(mat4_t)); }
+void render_set_model_mat(mat4_t *m) {
+  memcpy(&model_mat, m, sizeof(mat4_t));
+}
 
 void render_push_matrix() {
   render_flush();
@@ -287,7 +295,7 @@ void render_push_matrix() {
 }
 
 void render_pop_matrix() {
-  //render_flush();
+  render_flush();
   glPopMatrix();
 }
 
@@ -448,39 +456,27 @@ void render_buffer_tris(tris_t tris, uint16_t texture_index, tris_texid_t *buffe
 void render_push_sprite(vec3_t pos, vec2i_t size, rgba_t color, uint16_t texture_index) {
   error_if(texture_index >= textures_len, "Invalid texture %d", texture_index);
 
-  screen_2d_z += 0.001f;
-  vec3_t p1 = vec3_add(
-      pos, vec3_transform(vec3(-size.x * 0.5, -size.y * 0.5, screen_2d_z),
-                          &sprite_mat));
-  vec3_t p2 = vec3_add(
-      pos, vec3_transform(vec3(size.x * 0.5, -size.y * 0.5, screen_2d_z),
-                          &sprite_mat));
-  vec3_t p3 = vec3_add(
-      pos, vec3_transform(vec3(-size.x * 0.5, size.y * 0.5, screen_2d_z),
-                          &sprite_mat));
-  vec3_t p4 = vec3_add(
-      pos, vec3_transform(vec3(size.x * 0.5, size.y * 0.5, screen_2d_z),
-                          &sprite_mat));
+  // screen_2d_z += 0.001f;
+  vec3_t p1 = vec3_add(pos, vec3_transform(vec3(-size.x * 0.5, -size.y * 0.5, screen_2d_z), &sprite_mat));
+  vec3_t p2 = vec3_add(pos, vec3_transform(vec3(size.x * 0.5, -size.y * 0.5, screen_2d_z), &sprite_mat));
+  vec3_t p3 = vec3_add(pos, vec3_transform(vec3(-size.x * 0.5, size.y * 0.5, screen_2d_z), &sprite_mat));
+  vec3_t p4 = vec3_add(pos, vec3_transform(vec3(size.x * 0.5, size.y * 0.5, screen_2d_z), &sprite_mat));
 
   render_texture_t *t = &textures[texture_index];
-  render_push_tris(
-      (tris_t){.vertices =
-                   {
-                       {.pos = p1, .uv = {0, 0}, .color = color},
-                       {.pos = p2, .uv = {0 + t->size.x, 0}, .color = color},
-                       {.pos = p3, .uv = {0, 0 + t->size.y}, .color = color},
-                   }},
-      texture_index);
-  render_push_tris(
-      (tris_t){.vertices =
-                   {
-                       {.pos = p3, .uv = {0, 0 + t->size.y}, .color = color},
-                       {.pos = p2, .uv = {0 + t->size.x, 0}, .color = color},
-                       {.pos = p4,
-                        .uv = {0 + t->size.x, 0 + t->size.y},
-                        .color = color},
-                   }},
-      texture_index);
+  render_push_tris((tris_t){.vertices =
+                                {
+                                    {.pos = p1, .uv = {0, 0}, .color = color},
+                                    {.pos = p2, .uv = {0 + t->size.x, 0}, .color = color},
+                                    {.pos = p3, .uv = {0, 0 + t->size.y}, .color = color},
+                                }},
+                   texture_index);
+  render_push_tris((tris_t){.vertices =
+                                {
+                                    {.pos = p3, .uv = {0, 0 + t->size.y}, .color = color},
+                                    {.pos = p2, .uv = {0 + t->size.x, 0}, .color = color},
+                                    {.pos = p4, .uv = {0 + t->size.x, 0 + t->size.y}, .color = color},
+                                }},
+                   texture_index);
 }
 
 void render_buffer_sprite(vec3_t pos, vec2i_t size, rgba_t color, uint16_t texture_index, tris_texid_t *buffer_out) {
@@ -495,64 +491,44 @@ void render_buffer_sprite(vec3_t pos, vec2i_t size, rgba_t color, uint16_t textu
   tris_texid_t *tri1 = (buffer_out + 0);
   tris_texid_t *tri2 = (buffer_out + 1);
 
-  (*tri1).tri =
-      (tris_t){.vertices = {
-                   {.pos = p1, .uv = {0, 0}, .color = color},
-                   {.pos = p2, .uv = {0 + t->size.x, 0}, .color = color},
-                   {.pos = p3, .uv = {0, 0 + t->size.y}, .color = color},
-               }};
-  (*tri2).tri = (tris_t){
-      .vertices = {
-          {.pos = p3, .uv = {0, 0 + t->size.y}, .color = color},
-          {.pos = p2, .uv = {0 + t->size.x, 0}, .color = color},
-          {.pos = p4, .uv = {0 + t->size.x, 0 + t->size.y}, .color = color},
-      }};
+  (*tri1).tri = (tris_t){.vertices = {
+                             {.pos = p1, .uv = {0, 0}, .color = color},
+                             {.pos = p2, .uv = {0 + t->size.x, 0}, .color = color},
+                             {.pos = p3, .uv = {0, 0 + t->size.y}, .color = color},
+                         }};
+  (*tri2).tri = (tris_t){.vertices = {
+                             {.pos = p3, .uv = {0, 0 + t->size.y}, .color = color},
+                             {.pos = p2, .uv = {0 + t->size.x, 0}, .color = color},
+                             {.pos = p4, .uv = {0 + t->size.x, 0 + t->size.y}, .color = color},
+                         }};
 
   (*tri1).texture_id = texture_index;
   (*tri2).texture_id = texture_index;
 }
 
-void render_push_2d(vec2i_t pos, vec2i_t size, rgba_t color,
-                    uint16_t texture_index) {
-  render_push_2d_tile(pos, vec2i(0, 0), render_texture_size(texture_index),
-                      size, color, texture_index);
+void render_push_2d(vec2i_t pos, vec2i_t size, rgba_t color, uint16_t texture_index) {
+  render_push_2d_tile(pos, vec2i(0, 0), render_texture_size(texture_index), size, color, texture_index);
 }
 
-void render_push_2d_tile(vec2i_t pos, vec2i_t uv_offset, vec2i_t uv_size,
-                         vec2i_t size, rgba_t color, uint16_t texture_index) {
+void render_push_2d_tile(vec2i_t pos, vec2i_t uv_offset, vec2i_t uv_size, vec2i_t size, rgba_t color, uint16_t texture_index) {
   error_if(texture_index >= textures_len, "Invalid texture %d", texture_index);
 
-  screen_2d_z += 0.001f;
-  render_push_tris(
-      (tris_t){.vertices =
-                   {
-                       {.pos = {pos.x, pos.y + size.y, screen_2d_z},
-                        .uv = {uv_offset.x, uv_offset.y + uv_size.y},
-                        .color = color},
-                       {.pos = {pos.x + size.x, pos.y, screen_2d_z},
-                        .uv = {uv_offset.x + uv_size.x, uv_offset.y},
-                        .color = color},
-                       {.pos = {pos.x, pos.y, screen_2d_z},
-                        .uv = {uv_offset.x, uv_offset.y},
-                        .color = color},
-                   }},
-      texture_index);
+  // screen_2d_z += 0.001f;
+  render_push_tris((tris_t){.vertices =
+                                {
+                                    {.pos = {pos.x, pos.y + size.y, screen_2d_z}, .uv = {uv_offset.x, uv_offset.y + uv_size.y}, .color = color},
+                                    {.pos = {pos.x + size.x, pos.y, screen_2d_z}, .uv = {uv_offset.x + uv_size.x, uv_offset.y}, .color = color},
+                                    {.pos = {pos.x, pos.y, screen_2d_z}, .uv = {uv_offset.x, uv_offset.y}, .color = color},
+                                }},
+                   texture_index);
 
-  render_push_tris(
-      (tris_t){
-          .vertices =
-              {
-                  {.pos = {pos.x + size.x, pos.y + size.y, screen_2d_z},
-                   .uv = {uv_offset.x + uv_size.x, uv_offset.y + uv_size.y},
-                   .color = color},
-                  {.pos = {pos.x + size.x, pos.y, screen_2d_z},
-                   .uv = {uv_offset.x + uv_size.x, uv_offset.y},
-                   .color = color},
-                  {.pos = {pos.x, pos.y + size.y, screen_2d_z},
-                   .uv = {uv_offset.x, uv_offset.y + uv_size.y},
-                   .color = color},
-              }},
-      texture_index);
+  render_push_tris((tris_t){.vertices =
+                                {
+                                    {.pos = {pos.x + size.x, pos.y + size.y, screen_2d_z}, .uv = {uv_offset.x + uv_size.x, uv_offset.y + uv_size.y}, .color = color},
+                                    {.pos = {pos.x + size.x, pos.y, screen_2d_z}, .uv = {uv_offset.x + uv_size.x, uv_offset.y}, .color = color},
+                                    {.pos = {pos.x, pos.y + size.y, screen_2d_z}, .uv = {uv_offset.x, uv_offset.y + uv_size.y}, .color = color},
+                                }},
+                   texture_index);
 }
 
 uint32_t upper_power_of_two(uint32_t v) {
@@ -587,7 +563,7 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels) {
   tex_height = upper_power_of_two(th);
   // Check if npot and pad if not
   if (tw != tex_width || th != tex_height) {
-  #if 0
+#if 0
   // Full Pad, correctly and unambigously pad width and height
     pb = mem_temp_alloc(sizeof(rgba_t) * tex_width * tex_height);
     memset(pb, 0, sizeof(rgba_t) * tex_width * tex_height);
@@ -599,8 +575,8 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels) {
     _pixels = pb;
     printf("padding texture (%3d x %3d) -> (%3d x %3d)\n", tw, th, tex_width,
            tex_height);
-  #else
-  // Half Pad,only pads to width, lies about height.
+#else
+    // Half Pad,only pads to width, lies about height.
     pb = mem_temp_alloc(sizeof(rgba_t) * tex_width * th);
     memset(pb, 0, sizeof(rgba_t) * tex_width * th);
 
@@ -610,7 +586,7 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels) {
     }
     _pixels = pb;
     printf("fake padded texture (%3d x %3d) -> (%3d x %3d)\n", tw, th, tex_width, tex_height);
-  #endif
+#endif
   }
 #endif
   GLuint texId;
@@ -628,10 +604,7 @@ uint16_t render_texture_create(uint32_t tw, uint32_t th, rgba_t *pixels) {
 
   uint16_t texture_index = textures_len;
   textures_len++;
-  textures[texture_index] = (render_texture_t){
-      {tw, th},
-      {((float)tw) / ((float)tex_width), ((float)th) / ((float)tex_height)},
-      texId};
+  textures[texture_index] = (render_texture_t){{tw, th}, {((float)tw) / ((float)tex_width), ((float)th) / ((float)tex_height)}, texId};
 
   // printf("created texture (%3d x %3d) size %dkb\n", tw, th, (tw*th)/1024);
 
@@ -650,11 +623,12 @@ void render_texture_replace_pixels(int16_t texture_index, rgba_t *pixels) {
 
   render_texture_t *t = &textures[texture_index];
   glBindTexture(GL_TEXTURE_2D, t->texId);
-  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, t->size.x, t->size.y, GL_RGBA,
-                  GL_UNSIGNED_BYTE, pixels);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, t->size.x, t->size.y, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 }
 
-uint16_t render_textures_len() { return textures_len; }
+uint16_t render_textures_len() {
+  return textures_len;
+}
 
 void render_textures_reset(uint16_t len) {
   error_if(len > textures_len, "Invalid texture reset len %lu >= %lu", len, textures_len);

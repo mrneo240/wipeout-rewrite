@@ -66,7 +66,10 @@ elif opt_platform == 'sokol'
   arg_code += ['-DPLATFORM_SOKOL']
 elif opt_platform == 'psp'
   arg_code += ['-DPLATFORM_PSP']
-  arg_base += ['-DNO_INTRO', '-DHAS_WARNING', '-Og']
+  arg_code += ['-DPATH_ASSETS=disc0:/PSP_GAME/USRDIR/', '-DPATH_USERDATA=ms0:/']
+  arg_base += ['-DNO_INTRO', '-DHAS_WARNING', '-DDEBUG']
+  arg_base += ['-fsingle-precision-constant', '-ffast-math', '-O3', '-g0', '-fexpensive-optimizations', '-fomit-frame-pointer', '-finline-functions']
+
   opt_renderer = 'gu'
   arg_linker += [ '-Wl,--end-group', '-lpspgu', '-lpspvfpu', '-lpspctrl', '-lpspge', '-lpspdisplay', '-lm', '-lpspsdk', '-lpsprtc', '-lpspaudio', '-lpsppower', '-Wl,--start-group', '-lc' ]
 
@@ -83,7 +86,9 @@ elif opt_platform == 'psp'
 elif opt_platform == 'dc'
   arg_code += ['-DPLATFORM_DC', '-DNDEBUG']
   arg_base += ['-DNO_INTRO', '-DHAS_WARNING']
-  arg_base += ['-mpretend-cmove','-fsingle-precision-constant', '-ffast-math', '-Og', '-g3' ]
+#  arg_base += ['-Og', '-g3']
+  arg_base += ['-mpretend-cmove','-fsingle-precision-constant', '-ffast-math', '-O3', '-g0',
+                '-fexpensive-optimizations', '-fomit-frame-pointer', '-finline-functions',  '-mfsrra', '-mfsca']
   opt_renderer = 'gl_legacy'
 
   dc_debug_dep = declare_dependency(link_args :  ['-g3', '-Wl,-Map=output.map'])

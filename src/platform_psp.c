@@ -154,6 +154,7 @@ void platform_pump_events() {
     stick_y = ((float)stickV / 127);
   }
 
+  // Face buttons
   float btnStart = (float)(!!(data.Buttons & PSP_CTRL_START));
   input_set_button_state(INPUT_GAMEPAD_START, btnStart);
 
@@ -166,6 +167,7 @@ void platform_pump_events() {
   float btnTriangle = (float)(!!(data.Buttons & PSP_CTRL_TRIANGLE));
   input_set_button_state(INPUT_GAMEPAD_Y, btnTriangle);
 
+  // Dpad
   float btnUp = (float)(!!(data.Buttons & PSP_CTRL_UP));
   input_set_button_state(INPUT_GAMEPAD_DPAD_UP, btnUp);
   float btnDown = (float)(!!(data.Buttons & PSP_CTRL_DOWN));
@@ -174,6 +176,12 @@ void platform_pump_events() {
   input_set_button_state(INPUT_GAMEPAD_DPAD_LEFT, btnLeft);
   float btnRight = (float)(!!(data.Buttons & PSP_CTRL_RIGHT));
   input_set_button_state(INPUT_GAMEPAD_DPAD_RIGHT, btnRight);
+
+  // Triggers
+  float btnTriggerL = (float)(!!(data.Buttons & PSP_CTRL_LTRIGGER));
+  input_set_button_state(INPUT_GAMEPAD_L_SHOULDER, btnTriggerL);
+  float btnTriggerR = (float)(!!(data.Buttons & PSP_CTRL_RTRIGGER));
+  input_set_button_state(INPUT_GAMEPAD_R_SHOULDER, btnTriggerR);
 
   // joystick
   if (stick_x > 0.25f) {
@@ -220,7 +228,7 @@ scalar_t platform_now() {
 }
 
 bool platform_get_fullscreen(void) {
-	return true;
+  return true;
 }
 
 void platform_set_fullscreen(bool fullscreen) {
@@ -241,27 +249,29 @@ void platform_set_audio_mix_cb(void (*cb)(float *buffer, uint32_t len)) {
 }
 
 uint8_t *platform_load_asset(const char *name, uint32_t *bytes_read) {
-	char *path = strcat(strcpy(temp_path, path_assets), name);
-	return file_load(path, bytes_read);
+  char *path = strcat(strcpy(temp_path, path_assets), name);
+  return file_load(path, bytes_read);
 }
 
 uint8_t *platform_load_userdata(const char *name, uint32_t *bytes_read) {
-	char *path = strcat(strcpy(temp_path, path_userdata), name);
-	if (!file_exists(path)) {
-		*bytes_read = 0;
-		return NULL;
-	}
-	return file_load(path, bytes_read);
+  char *path = strcat(strcpy(temp_path, path_userdata), name);
+  printf("platform_load_userdata(%s) -> (%s)\n", name, path);
+  if (!file_exists(path)) {
+    *bytes_read = 0;
+    return NULL;
+  }
+  return file_load(path, bytes_read);
 }
 
 uint32_t platform_store_userdata(const char *name, void *bytes, int32_t len) {
-	char *path = strcat(strcpy(temp_path, path_userdata), name);
-	return file_store(path, bytes, len);
+  char *path = strcat(strcpy(temp_path, path_userdata), name);
+  printf("platform_load_userdata(%s) -> (%s)\n", name, path);
+  return file_store(path, bytes, len);
 }
 
 bool platform_file_exists(const char *name) {
-	char *path = strcat(strcpy(temp_path, path_assets), name);
-	return file_exists(path);
+  char *path = strcat(strcpy(temp_path, path_assets), name);
+  return file_exists(path);
 }
 
 #if defined(RENDERER_GU)
@@ -298,28 +308,28 @@ int main(int argc, char *argv[]) {
   last_time = sceKernelGetSystemTimeLow();
 
   char *_path_assets = NULL;
-	#ifdef PATH_ASSETS
-		path_assets = TOSTRING(PATH_ASSETS);
-	#else
-		_path_assets = "";
-		if (_path_assets) {
-			path_assets = _path_assets;
-		}
-	#endif
+#ifdef PATH_ASSETS
+  path_assets = TOSTRING(PATH_ASSETS);
+#else
+  _path_assets = "";
+  if (_path_assets) {
+    path_assets = _path_assets;
+  }
+#endif
 
-	char *_path_userdata = NULL;
-	#ifdef PATH_USERDATA
-		path_userdata = TOSTRING(PATH_USERDATA);
-	#else
-		_path_userdata = "";
-		if (_path_userdata) {
-			path_userdata = _path_userdata;
-		}
-	#endif
+  char *_path_userdata = NULL;
+#ifdef PATH_USERDATA
+  path_userdata = TOSTRING(PATH_USERDATA);
+#else
+  _path_userdata = "";
+  if (_path_userdata) {
+    path_userdata = _path_userdata;
+  }
+#endif
 
-	// Reserve some space for concatenating the asset and userdata paths with
-	// local filenames.
-	temp_path = mem_bump(max(strlen(path_assets), strlen(path_userdata)) + 64);
+  // Reserve some space for concatenating the asset and userdata paths with
+  // local filenames.
+  temp_path = mem_bump(max(strlen(path_assets), strlen(path_userdata)) + 64);
 
   // audio_device = SDL_OpenAudioDevice(NULL, 0, &(SDL_AudioSpec){
   //	.freq = 44100,

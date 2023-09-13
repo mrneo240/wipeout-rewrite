@@ -280,7 +280,7 @@ void render_draw_chunk(ObjectVertexChunk *chunk) {
   texman_bind_tex(&vramTexman, t->texId);
 
   // Not sure if benefit to copying to vram?
-#if 0
+#if 1
   void *buf = (void *)ALIGN((unsigned int)sceGuGetMemory(sizeof(tris_t) * chunk->tris_len + 15), 16);
   memcpy(buf, &chunk->tris[0], sizeof(tris_t) * chunk->tris_len);
   sceGuDrawArray(GU_TRIANGLES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, chunk->tris_len * 3, 0, buf);

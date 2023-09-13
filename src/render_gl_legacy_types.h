@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-typedef struct __attribute__((packed, aligned(4))) {
+typedef struct {
   uint32_t flags;
   vec3_t pos;
   vec2_t uv;
