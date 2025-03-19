@@ -87,29 +87,16 @@ elif opt_platform == 'dc'
   arg_code += ['-DPLATFORM_DC', '-DNDEBUG']
   arg_base += ['-DNO_INTRO', '-DHAS_WARNING']
   arg_code += ['-DPATH_ASSETS=/pc/', '-DPATH_USERDATA=/pc/']
-#  arg_base += ['-Og', '-g3']
-#  arg_base += ['-mpretend-cmove','-fsingle-precision-constant', '-ffast-math', '-O3', '-g0',
-#                '-fexpensive-optimizations', '-fomit-frame-pointer', '-finline-functions',  '-mfsrra', '-mfsca']
   arg_base += ['-fsingle-precision-constant', '-ffast-math', '-O2', '-g0',
                  '-fomit-frame-pointer', '-finline-functions',  '-mfsrra', '-mfsca']
   opt_renderer = 'gl_legacy'
 
   dc_debug_dep = declare_dependency(link_args :  ['-g3', '-Wl,-Map=output.map'])
+  libgldc_dep = dependency('gldc', fallback : ['gldc', 'libgldc_dep'])
 
-  #custom unknown libgl (from nuquake?)
-#  libgldc_proj = subproject('libgl')
-  # upstream latest GLdc, currently BROKEN
-#  libgldc_proj = subproject('gldc_upstream')
-  libgldc_proj = subproject('gldc_upstream_latest')
-
-  # gldc found in nuquake, unknown provenance
-#  libgldc_proj = subproject('libgl_unknown')
-
-  libgldc_dep = libgldc_proj.get_variable('libgldc_dep')
   platform_dep += [libgldc_dep, dc_debug_dep]
 
   src_platform += ['src/platform_dc.c']
-#  src_platform_types = ['src/types_dreamcast.c']
   src_platform_types = ['src/types.c']
 else
   error('No platform chosen!')
@@ -138,7 +125,6 @@ endif
 
 arg_c = [ arg_base, arg_code ]
 #arg_linker = [ '-Wl,--end-group', '-lpspdebug', '-lpspgu', '-lpspvfpu', '-lpspctrl', '-lpspge', '-lpspdisplay', '-lm', '-lpspsdk', '-lpsprtc', '-lpspaudio', '-lpsputility', '-lpspnet_inet', '-lpsppower', '-lc', '-Wl,--start-group','-lpspuser' ]
-
 
 inc_base = include_directories('src', 'src/libs', 'src/wipeout')
 
