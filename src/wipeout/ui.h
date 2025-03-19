@@ -10,8 +10,13 @@ typedef enum {
 	UI_SIZE_MAX
 } ui_text_size_t;
 
+#ifdef _arch_dreamcast
+#define UI_COLOR_ACCENT bgra(123, 98, 12, 255)
+#define UI_COLOR_DEFAULT bgra(128, 128, 128, 255)
+#else
 #define UI_COLOR_ACCENT rgba(123, 98, 12, 255)
 #define UI_COLOR_DEFAULT rgba(128, 128, 128, 255)
+#endif
 
 typedef enum {
 	UI_ICON_HAND,
@@ -33,7 +38,7 @@ typedef enum {
 } ui_pos_t;
 
 void ui_load(void);
-void ui_cleanup(void);
+//void ui_cleanup(void);
 
 int ui_get_scale(void);
 void ui_set_scale(int scale);

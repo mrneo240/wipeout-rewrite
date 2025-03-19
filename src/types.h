@@ -44,6 +44,13 @@ typedef struct ObjectVertexChunk {
 	tris_t *tris;
 } ObjectVertexChunk;
 
-rgba_t rgba_from_u32(uint32_t v);
+static __attribute__((always_inline)) rgba_t rgba_from_u32(uint32_t v) {
+		return rgba(
+		((v >> 24) & 0xff),
+		((v >> 16) & 0xff),
+		((v >> 8) & 0xff),
+		255
+	);
+}
 
 #endif

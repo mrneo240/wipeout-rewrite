@@ -86,9 +86,12 @@ elif opt_platform == 'psp'
 elif opt_platform == 'dc'
   arg_code += ['-DPLATFORM_DC', '-DNDEBUG']
   arg_base += ['-DNO_INTRO', '-DHAS_WARNING']
+  arg_code += ['-DPATH_ASSETS=/pc/', '-DPATH_USERDATA=/pc/']
 #  arg_base += ['-Og', '-g3']
-  arg_base += ['-mpretend-cmove','-fsingle-precision-constant', '-ffast-math', '-O3', '-g0',
-                '-fexpensive-optimizations', '-fomit-frame-pointer', '-finline-functions',  '-mfsrra', '-mfsca']
+#  arg_base += ['-mpretend-cmove','-fsingle-precision-constant', '-ffast-math', '-O3', '-g0',
+#                '-fexpensive-optimizations', '-fomit-frame-pointer', '-finline-functions',  '-mfsrra', '-mfsca']
+  arg_base += ['-fsingle-precision-constant', '-ffast-math', '-O2', '-g0',
+                 '-fomit-frame-pointer', '-finline-functions',  '-mfsrra', '-mfsca']
   opt_renderer = 'gl_legacy'
 
   dc_debug_dep = declare_dependency(link_args :  ['-g3', '-Wl,-Map=output.map'])
@@ -97,11 +100,10 @@ elif opt_platform == 'dc'
 #  libgldc_proj = subproject('libgl')
   # upstream latest GLdc, currently BROKEN
 #  libgldc_proj = subproject('gldc_upstream')
-  # upstream latest GLdc Prebuilt from Gitlab, currently BROKEN due to mismatch gcc ver
-#  libgldc_proj = subproject('gldc_upstream_prebuilt')
+  libgldc_proj = subproject('gldc_upstream_latest')
 
   # gldc found in nuquake, unknown provenance
-  libgldc_proj = subproject('libgl_unknown')
+#  libgldc_proj = subproject('libgl_unknown')
 
   libgldc_dep = libgldc_proj.get_variable('libgldc_dep')
   platform_dep += [libgldc_dep, dc_debug_dep]

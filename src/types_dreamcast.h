@@ -70,7 +70,9 @@ typedef union {
 	#error "No vertex format found!"
 #endif
 
+/* @Note: rgba -> bgra */
 #define rgba(R, G, B, A) ((rgba_t){.r = R, .g = G, .b = B, .a = A})
+#define bgra(R, G, B, A) ((rgba_t){.r = B, .g = G, .b = R, .a = A})
 #define vec2(X, Y) ((vec2_t){.x = X, .y = Y})
 #define vec3(X, Y, Z) ((vec3_t){.x = X, .y = Y, .z = Z})
 #define vec2i(X, Y) ((vec2i_t){.x = X, .y = Y})

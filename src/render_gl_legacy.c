@@ -61,7 +61,7 @@ uint16_t RENDER_NO_TEXTURE;
 
 static tris_t __attribute__((aligned(32))) tris_buffer[RENDER_TRIS_BUFFER_CAPACITY];
 static uint32_t tris_len = 0;
-static float screen_2d_z = -1;
+static float screen_2d_z = 0;
 
 static vec2i_t screen_size;
 
@@ -139,6 +139,18 @@ void render_cleanup(void) {
 }
 
 static void render_setup_2d_projection_mat(void) {
+  #if 0
+  float near = -1;
+  float far = 1;
+  float left = 0;
+  float right = screen_size.x;
+  float bottom = screen_size.y;
+  float top = 0;
+  float lr = 1 / (left - right);
+  float bt = 1 / (bottom - top);
+  float nf = 1 / (near - far);
+  projection_mat_2d = mat4(-2 * lr, 0, 0, 0, 0, -2 * bt, 0, 0, 0, 0, 2 * nf, 0, (left + right) * lr, (top + bottom) * bt, (far + near) * nf, 1);
+#endif
 #if 0
   float near = -1;
   float far = 1;
@@ -212,6 +224,7 @@ void render_frame_prepare() {
   glDepthMask(true);
   glDisable(GL_POLYGON_OFFSET_FILL);
   glClearColor(0, 0, 0, 1);
+  // glClearDepth(1.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, textures[RENDER_NO_TEXTURE].texId);
@@ -237,7 +250,7 @@ void render_flush() {
   glBindTexture(GL_TEXTURE_2D, t->texId);
   glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), &(tris_buffer[0].vertices[0].pos));
   glTexCoordPointer(2, GL_FLOAT, sizeof(vertex_t), &(tris_buffer[0].vertices[0].uv));
-  glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex_t), &(tris_buffer[0].vertices[0].color));
+  glColorPointer(GL_BGRA, GL_UNSIGNED_BYTE, sizeof(vertex_t), &(tris_buffer[0].vertices[0].color));
   glDrawArrays(GL_TRIANGLES, 0, tris_len * 3);
   tris_len = 0;
 }
@@ -247,7 +260,7 @@ void render_draw_chunk(ObjectVertexChunk *chunk) {
   glBindTexture(GL_TEXTURE_2D, t->texId);
   glVertexPointer(3, GL_FLOAT, sizeof(vertex_t), &chunk->tris[0].vertices[0].pos);
   glTexCoordPointer(2, GL_FLOAT, sizeof(vertex_t), &chunk->tris[0].vertices[0].uv);
-  glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex_t), &chunk->tris[0].vertices[0].color);
+  glColorPointer(GL_BGRA, GL_UNSIGNED_BYTE, sizeof(vertex_t), &chunk->tris[0].vertices[0].color);
   glDrawArrays(GL_TRIANGLES, 0, chunk->tris_len * 3);
 }
 
@@ -379,10 +392,10 @@ void render_push_tris(tris_t tris, uint16_t texture_index) {
 
   for (int i = 0; i < 3; i++) {
     // resize back to (0,1) uv space
-    tris.vertices[i].uv.x = (tris.vertices[i].uv.x / t->size.x) * t->scale.x;
-    tris.vertices[i].uv.y = (tris.vertices[i].uv.y / t->size.y) * t->scale.y;
+    tris.vertices[i].uv.x = (tris.vertices[i].uv.x / (float)t->size.x) * t->scale.x;
+    tris.vertices[i].uv.y = (tris.vertices[i].uv.y / (float)t->size.y) * t->scale.y;
     if (tris.vertices[i].color.a == 0) {
-      continue;
+      //continue; /*@Note: we probably shouldn't skip this? */
     }
 
     // move colors back to (0,255)
@@ -419,8 +432,8 @@ void render_buffer_tris(tris_t tris, uint16_t texture_index, tris_texid_t *buffe
 
   for (int i = 0; i < 3; i++) {
     // resize back to (0,1) uv space
-    tris.vertices[i].uv.x = (tris.vertices[i].uv.x / t->size.x) * t->scale.x;
-    tris.vertices[i].uv.y = (tris.vertices[i].uv.y / t->size.y) * t->scale.y;
+    tris.vertices[i].uv.x = (tris.vertices[i].uv.x / (float)t->size.x) * t->scale.x;
+    tris.vertices[i].uv.y = (tris.vertices[i].uv.y / (float)t->size.y) * t->scale.y;
     if (tris.vertices[i].color.a == 0) {
       continue;
     }
@@ -456,7 +469,7 @@ void render_buffer_tris(tris_t tris, uint16_t texture_index, tris_texid_t *buffe
 void render_push_sprite(vec3_t pos, vec2i_t size, rgba_t color, uint16_t texture_index) {
   error_if(texture_index >= textures_len, "Invalid texture %d", texture_index);
 
-  // screen_2d_z += 0.001f;
+  //screen_2d_z += 0.001f;
   vec3_t p1 = vec3_add(pos, vec3_transform(vec3(-size.x * 0.5, -size.y * 0.5, screen_2d_z), &sprite_mat));
   vec3_t p2 = vec3_add(pos, vec3_transform(vec3(size.x * 0.5, -size.y * 0.5, screen_2d_z), &sprite_mat));
   vec3_t p3 = vec3_add(pos, vec3_transform(vec3(-size.x * 0.5, size.y * 0.5, screen_2d_z), &sprite_mat));
@@ -513,7 +526,7 @@ void render_push_2d(vec2i_t pos, vec2i_t size, rgba_t color, uint16_t texture_in
 void render_push_2d_tile(vec2i_t pos, vec2i_t uv_offset, vec2i_t uv_size, vec2i_t size, rgba_t color, uint16_t texture_index) {
   error_if(texture_index >= textures_len, "Invalid texture %d", texture_index);
 
-  // screen_2d_z += 0.001f;
+  //screen_2d_z += 0.001f;
   render_push_tris((tris_t){.vertices =
                                 {
                                     {.pos = {pos.x, pos.y + size.y, screen_2d_z}, .uv = {uv_offset.x, uv_offset.y + uv_size.y}, .color = color},

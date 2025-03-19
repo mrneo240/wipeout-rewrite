@@ -2,7 +2,7 @@
 
 # PC Linux
 ## Setup
-1. `meson builddir`
+1. `meson setup builddir`
   1. specify either `-Dplatform` with [sokol, sdl]
   1. specify either `-Drenderer` with [gl, gl_legacy]
 

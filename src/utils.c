@@ -5,15 +5,6 @@
 #include "utils.h"
 #include "mem.h"
 
-rgba_t rgba_from_u32(uint32_t v) {
-	return rgba(
-		((v >> 24) & 0xff),
-		((v >> 16) & 0xff),
-		((v >> 8) & 0xff),
-		255
-	);
-}
-
 char temp_path[64];
 char *get_path(const char *dir, const char *file) {
 	strcpy(temp_path, dir);
